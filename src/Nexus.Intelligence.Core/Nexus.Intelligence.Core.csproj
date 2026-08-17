@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Nexus.Intelligence.Core</RootNamespace>
+    <AssemblyName>Nexus.Intelligence.Core</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nexus.Intelligence.Contracts\Nexus.Intelligence.Contracts.csproj" />
+    <ProjectReference Include="..\Nexus.Intelligence.Context\Nexus.Intelligence.Context.csproj" />
+    <ProjectReference Include="..\Nexus.Intelligence.Agents\Nexus.Intelligence.Agents.csproj" />
+    <ProjectReference Include="..\Nexus.Intelligence.Memory\Nexus.Intelligence.Memory.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nexus.Platform.Contracts" Version="0.1.0-*" />
+    <PackageReference Include="Nexus.Platform.Core" Version="0.1.0-*" />
+  </ItemGroup>
+
+</Project>
+

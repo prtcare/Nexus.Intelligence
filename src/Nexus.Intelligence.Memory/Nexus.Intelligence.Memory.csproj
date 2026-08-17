@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Nexus.Intelligence.Memory</RootNamespace>
+    <AssemblyName>Nexus.Intelligence.Memory</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nexus.Intelligence.Contracts\Nexus.Intelligence.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>
+

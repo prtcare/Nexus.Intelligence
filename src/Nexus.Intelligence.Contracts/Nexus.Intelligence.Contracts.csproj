@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Nexus.Intelligence.Contracts</RootNamespace>
+    <AssemblyName>Nexus.Intelligence.Contracts</AssemblyName>
+    <IsPackable>true</IsPackable>
+    <PackageId>Nexus.Intelligence.Contracts</PackageId>
+    <Authors>PRT</Authors>
+    <Description>Nexus V2 - Nexus.Intelligence.Contracts</Description>
+  </PropertyGroup>
+
+</Project>
+

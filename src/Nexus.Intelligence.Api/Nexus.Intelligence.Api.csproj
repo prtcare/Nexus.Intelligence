@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Nexus.Intelligence.Api</RootNamespace>
+    <AssemblyName>Nexus.Intelligence.Api</AssemblyName>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nexus.Intelligence.Core\Nexus.Intelligence.Core.csproj" />
+    <ProjectReference Include="..\Nexus.Intelligence.Contracts\Nexus.Intelligence.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nexus.Platform.Contracts" Version="0.1.0-*" />
+    <PackageReference Include="Nexus.Platform.Core" Version="0.1.0-*" />
+    <PackageReference Include="Nexus.Platform.Identity" Version="0.1.0-*" />
+    <PackageReference Include="Nexus.Platform.Persistence" Version="0.1.0-*" />
+    <PackageReference Include="Nexus.Platform.Providers.Anthropic" Version="0.1.0-*" />
+    <PackageReference Include="Nexus.Platform.Providers.OpenAI" Version="0.1.0-*" />
+    <PackageReference Include="Nexus.Platform.Tools" Version="0.1.0-*" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+  </ItemGroup>
+
+</Project>
+

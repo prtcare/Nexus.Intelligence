@@ -1,0 +1,14 @@
+﻿<Solution>
+  <Folder Name="/src/">
+    <Project Path="src\Nexus.Intelligence.Contracts\Nexus.Intelligence.Contracts.csproj" />
+    <Project Path="src\Nexus.Intelligence.Core\Nexus.Intelligence.Core.csproj" />
+    <Project Path="src\Nexus.Intelligence.Context\Nexus.Intelligence.Context.csproj" />
+    <Project Path="src\Nexus.Intelligence.Agents\Nexus.Intelligence.Agents.csproj" />
+    <Project Path="src\Nexus.Intelligence.Memory\Nexus.Intelligence.Memory.csproj" />
+    <Project Path="src\Nexus.Intelligence.Api\Nexus.Intelligence.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests\Nexus.Intelligence.Tests\Nexus.Intelligence.Tests.csproj" />
+    <Project Path="tests\Nexus.Intelligence.Architecture.Tests\Nexus.Intelligence.Architecture.Tests.csproj" />
+  </Folder>
+</Solution>
