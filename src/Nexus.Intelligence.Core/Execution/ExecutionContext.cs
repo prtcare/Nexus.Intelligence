@@ -1,6 +1,5 @@
-﻿using NexusAI.Domain.Project;
+using Nexus.Intelligence.Contracts;
 
-namespace NexusAI.Application.Execution;
+namespace Nexus.Intelligence.Core.Execution;
 
-public sealed record ExecutionContext(
-    ProjectId ProjectId);
+public sealed record ExecutionContext(ScopeRef Scope, ActorRef Actor);

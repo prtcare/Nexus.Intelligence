@@ -1,32 +1,27 @@
-﻿using NexusAI.Core.Agents;
+using Nexus.Intelligence.Agents.Abstractions;
+using Nexus.Intelligence.Core.Turns;
 
-namespace NexusAI.Application.Execution;
+namespace Nexus.Intelligence.Core.Execution;
 
 public sealed class ExecutionEngine : IExecutionEngine
 {
+    private readonly IAgentSelector _agentSelector;
     private readonly IAgentDispatcher _dispatcher;
 
-    public ExecutionEngine(IAgentDispatcher dispatcher)
+    public ExecutionEngine(IAgentSelector agentSelector, IAgentDispatcher dispatcher)
     {
+        _agentSelector = agentSelector;
         _dispatcher = dispatcher;
     }
 
-    public async Task<ExecutionResult> ExecuteAsync(
-        ExecutionContext context,
-        CancellationToken cancellationToken = default)
+    public async Task<ExecutionResult> ExecuteAsync(ExecutionContext context, CancellationToken cancellationToken = default)
     {
-        var agentContext = new AgentContext(
-            context.ProjectId.ToString(),
-            string.Empty,
-            string.Empty,
-            AgentType.Developer);
+        var selection = _agentSelector.Select(TurnIntent.Task, context.Actor);
 
-        var agentResult = await _dispatcher.DispatchAsync(
-            agentContext,
-            cancellationToken);
+        var agentContext = new AgentContext(context.Scope, context.Actor, selection.Type);
 
-        return new ExecutionResult(
-            agentResult.Success,
-            agentResult.Success ? 1 : 0);
+        var agentResult = await _dispatcher.DispatchAsync(agentContext, cancellationToken);
+
+        return new ExecutionResult(agentResult.Success, agentResult.Success ? 1 : 0);
     }
 }

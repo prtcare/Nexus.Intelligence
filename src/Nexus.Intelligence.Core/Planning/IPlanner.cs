@@ -1,12 +1,8 @@
-﻿using NexusAI.Domain.Project;
-using WorkItemModel = NexusAI.Domain.WorkItem.WorkItem;
+using Nexus.Intelligence.Contracts;
 
-namespace NexusAI.Application.Planning;
+namespace Nexus.Intelligence.Core.Planning;
 
 public interface IPlanner
 {
-    Task<IReadOnlyList<WorkItemModel>> CreatePlanAsync(
-        ProjectId projectId,
-        string objective,
-        CancellationToken cancellationToken = default);
+    Task<PlanPayload> CreatePlanAsync(IntelligenceTurnRequest request, CancellationToken ct = default);
 }

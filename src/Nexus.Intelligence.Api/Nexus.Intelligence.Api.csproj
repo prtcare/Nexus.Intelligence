@@ -5,6 +5,7 @@
     <RootNamespace>Nexus.Intelligence.Api</RootNamespace>
     <AssemblyName>Nexus.Intelligence.Api</AssemblyName>
     <IsPackable>false</IsPackable>
+    <UserSecretsId>0b5d9fda-b833-4142-bc5e-0e6e6fbdae5b</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

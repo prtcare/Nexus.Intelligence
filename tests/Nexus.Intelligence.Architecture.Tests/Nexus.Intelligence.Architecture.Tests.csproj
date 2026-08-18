@@ -13,6 +13,8 @@
     <ProjectReference Include="..\..\src\Nexus.Intelligence.Contracts\Nexus.Intelligence.Contracts.csproj" />
     <ProjectReference Include="..\..\src\Nexus.Intelligence.Context\Nexus.Intelligence.Context.csproj" />
     <ProjectReference Include="..\..\src\Nexus.Intelligence.Agents\Nexus.Intelligence.Agents.csproj" />
+    <ProjectReference Include="..\..\src\Nexus.Intelligence.Memory\Nexus.Intelligence.Memory.csproj" />
+    <ProjectReference Include="..\..\src\Nexus.Intelligence.Api\Nexus.Intelligence.Api.csproj" />
   </ItemGroup>
 
   <ItemGroup>

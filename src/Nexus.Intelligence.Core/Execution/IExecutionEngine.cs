@@ -1,10 +1,6 @@
-﻿using NexusAI.Domain.Project;
-
-namespace NexusAI.Application.Execution;
+namespace Nexus.Intelligence.Core.Execution;
 
 public interface IExecutionEngine
 {
-    Task<ExecutionResult> ExecuteAsync(
-    ExecutionContext context,
-    CancellationToken cancellationToken = default);
+    Task<ExecutionResult> ExecuteAsync(ExecutionContext context, CancellationToken cancellationToken = default);
 }
