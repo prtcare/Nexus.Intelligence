@@ -1,6 +1,4 @@
-﻿using NexusAI.Core.Agents;
-
-namespace NexusAI.Infrastructure.Agents;
+namespace Nexus.Intelligence.Agents.Abstractions;
 
 public sealed class AgentRuntime : IAgentRuntime
 {

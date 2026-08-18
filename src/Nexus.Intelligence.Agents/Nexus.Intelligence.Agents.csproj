@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <PackageReference Include="Nexus.Platform.Contracts" Version="0.1.0-*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-﻿namespace NexusAI.Core.Agents;
+namespace Nexus.Intelligence.Agents.Abstractions;
 
 public sealed record AgentResult(
     bool Success,

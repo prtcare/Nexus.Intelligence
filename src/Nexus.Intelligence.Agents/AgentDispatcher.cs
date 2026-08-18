@@ -1,7 +1,6 @@
-﻿using NexusAI.Application.Execution;
-using NexusAI.Core.Agents;
+using Nexus.Intelligence.Agents.Abstractions;
 
-namespace NexusAI.Infrastructure.Services;
+namespace Nexus.Intelligence.Agents;
 
 public sealed class AgentDispatcher : IAgentDispatcher
 {
@@ -18,7 +17,7 @@ public sealed class AgentDispatcher : IAgentDispatcher
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        var agent = _registry.GetAgent(context.AgentType);
+        var agent = _registry.GetAgent(context.Type);
 
         return agent.ExecuteAsync(
             context,

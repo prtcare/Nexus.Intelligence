@@ -1,12 +1,10 @@
-﻿namespace NexusAI.Core.Agents;
+namespace Nexus.Intelligence.Agents.Abstractions;
 
 public interface IAgent
 {
     AgentMetadata Metadata { get; }
 
-
-Task<AgentResult> ExecuteAsync(
-    AgentContext context,
-    CancellationToken cancellationToken = default);
-
+    Task<AgentResult> ExecuteAsync(
+        AgentContext context,
+        CancellationToken cancellationToken = default);
 }

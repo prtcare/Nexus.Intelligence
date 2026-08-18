@@ -1,6 +1,6 @@
-﻿using NexusAI.Core.Agents;
+using Nexus.Intelligence.Agents.Abstractions;
 
-namespace NexusAI.Infrastructure.Services;
+namespace Nexus.Intelligence.Agents;
 
 public sealed class AgentRegistry : IAgentRegistry
 {

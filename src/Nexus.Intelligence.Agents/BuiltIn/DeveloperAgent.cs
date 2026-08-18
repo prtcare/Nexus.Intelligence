@@ -1,9 +1,17 @@
-﻿using NexusAI.Core.Agents;
+using Microsoft.Extensions.Logging;
+using Nexus.Intelligence.Agents.Abstractions;
 
-namespace NexusAI.Agents.Developer;
+namespace Nexus.Intelligence.Agents.BuiltIn;
 
 public sealed class DeveloperAgent : IAgent
 {
+    private readonly ILogger<DeveloperAgent> _logger;
+
+    public DeveloperAgent(ILogger<DeveloperAgent> logger)
+    {
+        _logger = logger;
+    }
+
     public AgentMetadata Metadata => new()
     {
         Id = "developer",
@@ -15,8 +23,11 @@ public sealed class DeveloperAgent : IAgent
         AgentContext context,
         CancellationToken cancellationToken = default)
     {
-        Console.WriteLine($"Running {Metadata.Name} Agent");
-        Console.WriteLine($"Project: {context.ProjectId}");
+        _logger.LogInformation(
+            "Running {AgentName} agent for scope {ScopeKind}:{ScopeKey}",
+            Metadata.Name,
+            context.Scope.Kind,
+            context.Scope.Key);
 
         return Task.FromResult(
             new AgentResult(

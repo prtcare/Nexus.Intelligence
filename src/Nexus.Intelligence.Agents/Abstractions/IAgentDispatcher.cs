@@ -1,9 +1,8 @@
 namespace Nexus.Intelligence.Agents.Abstractions;
 
-public interface IAgentRuntime
+public interface IAgentDispatcher
 {
-    Task RunAsync(
-        IAgent agent,
+    Task<AgentResult> DispatchAsync(
         AgentContext context,
         CancellationToken cancellationToken = default);
 }

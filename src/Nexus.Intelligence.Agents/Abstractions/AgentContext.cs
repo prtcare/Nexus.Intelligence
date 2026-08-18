@@ -1,7 +1,5 @@
-﻿namespace NexusAI.Core.Agents;
+using Nexus.Intelligence.Contracts;
 
-public sealed record AgentContext(
-    string ProjectId,
-    string ConversationId,
-    string WorkspaceId,
-    AgentType AgentType);
+namespace Nexus.Intelligence.Agents.Abstractions;
+
+public sealed record AgentContext(ScopeRef Scope, ActorRef Actor, AgentType Type);
