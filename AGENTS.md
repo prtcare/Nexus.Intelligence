@@ -1,6 +1,6 @@
-# AGENTS.md — Nexus.Int (Nexus.Intelligence)
+# AGENTS.md — Nexus.Intelligence
 
-**Repository**: C:\Personal\Nexus.Int · github.com/prtcare/Nexus-Int · solution Nexus.Int.slnx
+**Repository**: C:\Personal\Nexus.Intelligence · github.com/prtcare/Nexus.Intelligence · solution Nexus.Intelligence.slnx
 **Is**: The deciding layer — intent, context ranking, agent selection, model selection, prompt assembly, policy gate. Deployed at `/intelligence/v1`. Consumes `Nexus.Platform.*` packages via this repository's own `nuget.config`. See README.md for the full is/is-not.
 **This repo has no `docs\` folder of its own.** All cross-cutting documentation lives in the sibling repository, `..\NexusAI\docs\`.
 

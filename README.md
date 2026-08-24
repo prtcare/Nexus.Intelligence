@@ -1,4 +1,4 @@
-# Nexus.Int — the Intelligence
+# Nexus.Intelligence — the Intelligence
 
 The deciding layer. Given a turn from any product, it decides **what** to do, **where** to
 look and **how** to answer: intent classification, context ranking, agent selection, model
@@ -25,8 +25,8 @@ It also does not call model providers directly — that is Platform's job, reach
 ## Local development
 
 ```powershell
-dotnet build Nexus.Int.slnx
-dotnet test  Nexus.Int.slnx
+dotnet build Nexus.Intelligence.slnx
+dotnet test  Nexus.Intelligence.slnx
 dotnet run --project src\Nexus.Intelligence.Api\Nexus.Intelligence.Api.csproj
 ```
 
