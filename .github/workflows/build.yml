@@ -1,0 +1,52 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # This repo consumes Nexus.Platform.* packages from GitHub Packages
+    # (nuget.config -> github-prtcare feed), so the restore step needs the
+    # private-feed credentials. They come from repo secrets only - never inline.
+    env:
+      GITHUB_PACKAGES_USERNAME: ${{ secrets.PACKAGES_USERNAME }}
+      GITHUB_PACKAGES_TOKEN: ${{ secrets.PACKAGES_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # SDK version is read from global.json (10.0.302, matching Nexus.Platform)
+      # rather than hardcoded here, so the pipeline stays in sync with the
+      # repo's pinned SDK.
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # nuget.config pins the feed list (<clear/> then nuget.org + github-prtcare)
+      # and reads %GITHUB_PACKAGES_USERNAME% / %GITHUB_PACKAGES_TOKEN% from the
+      # job env above. This is the one step that differs from Nexus.Platform,
+      # which has no private feed and restores with no credentials.
+      - name: Restore
+        run: dotnet restore Nexus.Intelligence.slnx
+
+      - name: Build
+        run: dotnet build Nexus.Intelligence.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test Nexus.Intelligence.slnx -c Release --no-build --logger trx --results-directory ./artifacts/test-results
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: ${{ github.workspace }}/artifacts/test-results
+          if-no-files-found: warn
