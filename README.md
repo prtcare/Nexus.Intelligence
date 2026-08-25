@@ -35,7 +35,7 @@ Swagger comes up at `http://localhost:5000/swagger`.
 **The model provider key lives here and nowhere else**, under
 `Platform:Providers:OpenAI:ApiKey`. A product holding a provider credential is an
 architectural violation, not a configuration preference. Use `set-openai-key.ps1` in the
-NexusAI repo to set or rotate it — never `dotnet user-secrets set`, which parks the value in
+Nexus.Platform repo to set or rotate it — never `dotnet user-secrets set`, which parks the value in
 PowerShell history.
 
 `Properties\launchSettings.json` must exist and set `ASPNETCORE_ENVIRONMENT=Development`.
@@ -44,5 +44,5 @@ presents as a confusing 401 from the provider rather than as a configuration err
 
 ## Documentation
 
-Cross-cutting architecture, conventions and decisions: **`..\NexusAI\docs\`** —
+Cross-cutting architecture, conventions and decisions: **`..\Nexus.Platform\docs\`** —
 start at `DOCUMENTATION_INDEX.md`. This repo has no `docs\` folder of its own.

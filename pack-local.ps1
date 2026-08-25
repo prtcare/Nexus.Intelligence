@@ -1,5 +1,5 @@
 # Packs Nexus.Intelligence.Contracts and publishes it to GitHub Packages so
-# Nexus.Web (and anything else outside this repo) can consume it.
+# Nexus.Experience (and anything else outside this repo) can consume it.
 $ErrorActionPreference = 'Stop'
 
 # Credential: read from $env:GITHUB_PACKAGES_TOKEN (a PAT scoped to write:packages).
@@ -24,4 +24,4 @@ Write-Host 'pushing to GitHub Packages (https://nuget.pkg.github.com/prtcare/ind
 dotnet nuget push "$feed\Nexus.Intelligence.Contracts.$version.nupkg" --source https://nuget.pkg.github.com/prtcare/index.json --api-key $env:GITHUB_PACKAGES_TOKEN --skip-duplicate
 if ($LASTEXITCODE -ne 0) { throw 'nuget push failed' }
 
-Write-Host 'done. Nexus.Web picks this up via its nuget.config github-prtcare source.' -ForegroundColor Green
+Write-Host 'done. Nexus.Experience picks this up via its nuget.config github-prtcare source.' -ForegroundColor Green

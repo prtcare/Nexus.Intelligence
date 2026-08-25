@@ -2,21 +2,21 @@
 
 **Repository**: C:\Personal\Nexus.Intelligence · github.com/prtcare/Nexus.Intelligence · solution Nexus.Intelligence.slnx
 **Is**: The deciding layer — intent, context ranking, agent selection, model selection, prompt assembly, policy gate. Deployed at `/intelligence/v1`. Consumes `Nexus.Platform.*` packages via this repository's own `nuget.config`. See README.md for the full is/is-not.
-**This repo has no `docs\` folder of its own.** All cross-cutting documentation lives in the sibling repository, `..\NexusAI\docs\`.
+**This repo has no `docs\` folder of its own.** All cross-cutting documentation lives in the sibling repository, `..\Nexus.Platform\docs\`.
 
 ## Read before implementing (always)
 
 1. This file.
-2. `..\NexusAI\docs\DOCUMENTATION_INDEX.md`
-3. `..\NexusAI\docs\CURRENT_STATE.md`
+2. `..\Nexus.Platform\docs\DOCUMENTATION_INDEX.md`
+3. `..\Nexus.Platform\docs\CURRENT_STATE.md`
 4. `README.md` (this repository) — is/is-not, local dev commands, the provider-key rule.
 5. Whatever the active implementation prompt names as task-specific reading.
 
-If `..\NexusAI` is not present as a sibling folder, stop and report.
+If `..\Nexus.Platform` is not present as a sibling folder, stop and report.
 
 ## Authoritative rules for this repository
 
-Repository instructions in this file override a coding model's default conventions. Coding/naming/security/testing/git rules live in and are owned by the standards indexed in `..\NexusAI\docs\DOCUMENTATION_INDEX.md`. The full model-independent development process is `..\NexusAI\docs\AI_DEVELOPMENT_GOVERNANCE.md`.
+Repository instructions in this file override a coding model's default conventions. Coding/naming/security/testing/git rules live in and are owned by the standards indexed in `..\Nexus.Platform\docs\DOCUMENTATION_INDEX.md`. The full model-independent development process is `..\Nexus.Platform\docs\AI_DEVELOPMENT_GOVERNANCE.md`.
 
 ## The one rule specific to this repository
 
@@ -28,8 +28,8 @@ Inspect existing implementation and naming before adding anything new. Confirm `
 
 ## What you may decide yourself / what requires architect approval / before declaring completion
 
-Same boundary as `..\NexusAI\docs\AI_DEVELOPMENT_GOVERNANCE.md` defines. When in doubt, stop and report rather than guess.
+Same boundary as `..\Nexus.Platform\docs\AI_DEVELOPMENT_GOVERNANCE.md` defines. When in doubt, stop and report rather than guess.
 
 ## Known temporary mechanisms in this repository
 
-See `..\NexusAI\docs\CURRENT_STATE.md`. As of 2026-08-23: this repository's own `nuget.config` is what actually references `C:\Personal\LocalNuGet` (NexusAI has none); `InMemoryMemoryStore` is genuinely in-memory here (`ConcurrentDictionary`, no persistence); `set-openai-key.ps1` in NexusAI is documented as standing in for the not-yet-built `ISecretResolver`.
+See `..\Nexus.Platform\docs\CURRENT_STATE.md`. As of 2026-08-23: this repository's own `nuget.config` is what actually references `C:\Personal\LocalNuGet` (NexusAI has none); `InMemoryMemoryStore` is genuinely in-memory here (`ConcurrentDictionary`, no persistence); `set-openai-key.ps1` in NexusAI is documented as standing in for the not-yet-built `ISecretResolver`.
