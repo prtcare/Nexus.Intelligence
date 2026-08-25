@@ -32,4 +32,4 @@ Same boundary as `..\Nexus.Platform\docs\AI_DEVELOPMENT_GOVERNANCE.md` defines. 
 
 ## Known temporary mechanisms in this repository
 
-See `..\Nexus.Platform\docs\CURRENT_STATE.md`. As of 2026-08-23: this repository's own `nuget.config` is what actually references `C:\Personal\LocalNuGet` (NexusAI has none); `InMemoryMemoryStore` is genuinely in-memory here (`ConcurrentDictionary`, no persistence); `set-openai-key.ps1` in NexusAI is documented as standing in for the not-yet-built `ISecretResolver`.
+See `..\Nexus.Platform\docs\CURRENT_STATE.md`. As of 2026-08-25: this repository's `nuget.config` sources only `nuget.org` and `github-prtcare` (GitHub Packages, `nuget.pkg.github.com/prtcare`); the former `C:\Personal\LocalNuGet` source was removed as part of M-08-1.1. `InMemoryMemoryStore` is genuinely in-memory here (`ConcurrentDictionary`, no persistence); `set-openai-key.ps1` in NexusAI is documented as standing in for the not-yet-built `ISecretResolver`.
