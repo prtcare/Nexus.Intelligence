@@ -3,3 +3,6 @@ obj/
 .vs/
 *.user
 .migration-logs/
+# CI result artifact (M-08-1.3) - emitted locally and on the runner, never committed
+/artifacts/
+/ci-results/

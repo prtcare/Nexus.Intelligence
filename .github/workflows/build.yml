@@ -22,6 +22,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # M-08-1.3: the result artifact carries StartedAt/CompletedAt. Start time is
+      # captured before restore/build/test so that even a job that dies early still
+      # emits a truthful artifact - the emit step below runs `if: always()`.
+      - name: Capture run start time
+        run: |
+          mkdir -p ci-results
+          date -u +"%Y-%m-%dT%H:%M:%SZ" > ci-results/started-at
+
       # SDK version is read from global.json (10.0.302, matching Nexus.Platform)
       # rather than hardcoded here, so the pipeline stays in sync with the
       # repo's pinned SDK.
@@ -50,3 +58,43 @@ jobs:
           name: test-results
           path: ${{ github.workspace }}/artifacts/test-results
           if-no-files-found: warn
+
+      # M-08-1.3: machine-readable CI result. Runs whether the job passed or failed
+      # so every run publishes an artifact. Test counts are parsed from the trx files
+      # the Test step produced (no third-party action - the seam is too important to
+      # depend on an unvetted dependency). The artifact name encodes the branch, with
+      # characters GitHub artifact names forbid (slashes in particular) replaced, so a
+      # caller can identify the run's result by branch. Mirrors Nexus.Platform.
+      - name: Emit CI result artifact
+        if: always()
+        id: emit
+        shell: pwsh
+        run: |
+          # push -> github.ref_name is the branch; pull_request -> github.ref_name is
+          # "<pr>/merge", so use the PR source branch. The branch name is the join key
+          # DEVELOPER matches to a work item (DELIVERY_ARCHITECTURE.md 4.2).
+          $branch = "${{ github.ref_name }}"
+          if ("${{ github.event_name }}" -eq "pull_request") { $branch = "${{ github.head_ref }}" }
+
+          ./scripts/emit-ci-result.ps1 `
+            -Repository "${{ github.repository }}" `
+            -Branch $branch `
+            -CommitSha "${{ github.sha }}" `
+            -WorkflowRunId "${{ github.run_id }}" `
+            -JobStatus "${{ job.status }}" `
+            -TrxDirectory ./artifacts/test-results `
+            -StartedAtFile ci-results/started-at `
+            -OutputPath ci-results/result.json
+
+          $safeBranch = ($branch -replace '[^A-Za-z0-9._-]', '-')
+          if ($safeBranch.Length -gt 120) { $safeBranch = $safeBranch.Substring(0, 120) }
+          $safeBranch = $safeBranch.TrimEnd('-')
+          Write-Output "artifact_name=ci-result-$safeBranch" >> $env:GITHUB_OUTPUT
+
+      - name: Upload CI result artifact
+        if: always() && steps.emit.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.emit.outputs.artifact_name }}
+          path: ci-results/result.json
+          if-no-files-found: error
