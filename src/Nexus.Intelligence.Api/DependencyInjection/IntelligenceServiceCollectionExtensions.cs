@@ -333,11 +333,23 @@ public static class IntelligenceServiceCollectionExtensions
         // hold: TimeSpan is a struct and every AddSingleton overload that takes an instance requires a
         // reference type. Creating the service through ActivatorUtilities passes the interval as an
         // explicit argument and resolves the runner and the logger from the container as usual.
+        // W10.7: the sweep is registered under its OWN TYPE as well as under IHostedService.
+        //
+        // The hosted registration is what makes it run; the typed one is what makes it ASKABLE. Before
+        // this, the only registration was an IHostedService factory, and "is this estate running the
+        // probe sweep" could not be answered from the container at all — the question was answered by
+        // re-deriving the guard below, which is the composition root's reasoning rather than the
+        // container's contents. That distinction stopped being academic the moment the estate acquired
+        // a second hosted service: the weak test then reported a running probe on an estate whose
+        // sweep is not composed, which is exactly the implemented-is-not-running collapse the published
+        // read model must not make.
         if (operationsConfiguration.ProbeInterval is { } probeInterval)
         {
-            services.AddHostedService(provider => ActivatorUtilities.CreateInstance<AiHealthProbeService>(
+            services.AddSingleton(provider => ActivatorUtilities.CreateInstance<AiHealthProbeService>(
                 provider,
                 probeInterval));
+
+            services.AddHostedService(provider => provider.GetRequiredService<AiHealthProbeService>());
         }
 
         // W7C: the router.
