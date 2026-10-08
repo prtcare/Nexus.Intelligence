@@ -120,10 +120,37 @@ public sealed class Planner : IPlanner
 
         if (!outcome.Invoked)
         {
+            // W10.7A. A REFUSAL IS NOT AN EMPTY PLAN. This used to return `new PlanPayload([])` and let
+            // the endpoint answer HTTP 200, so a governed refusal and a permitted-but-empty plan were the
+            // same value — byte-identical on the wire, and a caller could not tell a policy decision
+            // from a successful non-answer. The outcome now travels with the payload, and the reason is
+            // the one the decision actually gave rather than a code invented at this line.
+            //
+            // NO PLAN IDENTITY IS MANUFACTURED. A refusal produced no plan; `planId` above is the
+            // request/invocation identity the trace is keyed by, and promoting it to a plan identity
+            // would be inventing an artefact to point at something that never existed.
+            plan = plan with
+            {
+                Outcome = PlanOutcomeKind.Refused,
+                Refusal = new PlanRefusal
+                {
+                    ReasonCode = outcome.Failure?.Code ?? outcome.Decision.RuleId ?? "planning.refused",
+                    Message = outcome.Failure?.Message
+                        ?? "The estate did not permit this planning request.",
+                    RuleId = outcome.Decision.RuleId,
+                },
+            };
+
             decisions.Add(new DecisionTrace(
                 $"Returned an empty plan: {outcome.Decision.RuleId}",
                 outcome.Decision.Reason,
                 [.. outcome.Decision.RulesApplied]));
+        }
+        else if (plan.Steps.Count == 0)
+        {
+            // The estate permitted it and the model returned nothing usable. A legitimate empty plan,
+            // and NOT a refusal — the two must never collapse into one another in either direction.
+            plan = plan with { Outcome = PlanOutcomeKind.Empty };
         }
 
         await RecordAsync(request, planId, decisions, ct).ConfigureAwait(false);
