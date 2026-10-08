@@ -6,6 +6,13 @@
     <Project Path="src\Nexus.Intelligence.Agents\Nexus.Intelligence.Agents.csproj" />
     <Project Path="src\Nexus.Intelligence.Memory\Nexus.Intelligence.Memory.csproj" />
     <Project Path="src\Nexus.Intelligence.Api\Nexus.Intelligence.Api.csproj" />
+    <Project Path="src\Nexus.Platform.Providers.Anthropic\Nexus.Platform.Providers.Anthropic.csproj" />
+    <!-- W5G / F-01: arrived from Nexus.Platform with its git history intact (a history-
+         preserving split + merge, not a copy). Namespace and assembly name are deliberately
+         unchanged - HD-11 retains assembly/namespace/package/API identity through W5 - so it
+         still reads Nexus.Platform.Providers.OpenAI even though it now lives in the AI Head,
+         exactly as Nexus.Platform.Providers.Anthropic already does. -->
+    <Project Path="src\Nexus.Platform.Providers.OpenAI\Nexus.Platform.Providers.OpenAI.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests\Nexus.Intelligence.Tests\Nexus.Intelligence.Tests.csproj" />

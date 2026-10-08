@@ -1,5 +1,5 @@
-using System.Text.Json.Serialization;
 using Microsoft.OpenApi;
+using Nexus.Intelligence.Api;
 using Nexus.Intelligence.Api.DependencyInjection;
 using Nexus.Intelligence.Api.Endpoints;
 using Nexus.Intelligence.Api.ResultReports;
@@ -22,10 +22,7 @@ builder.Services.AddSingleton<IResultReportStore, InMemoryResultReportStore>();
 
 builder.Services.AddSingleton(TimeProvider.System);
 
-builder.Services.ConfigureHttpJsonOptions(options =>
-{
-    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
+builder.Services.ConfigureHttpJsonOptions(options => AiJsonConfiguration.Apply(options.SerializerOptions));
 
 builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
@@ -55,6 +52,14 @@ app.MapHealthEndpoints();
 app.MapTurnsEndpoints();
 app.MapResultsEndpoints();
 app.MapPlansEndpoints();
+// W7F: the caller-facing gateway, then the operator-facing read surface. Mapped in that order so that
+// the route table reads the way the boundary is meant to be understood, and both after the legacy turn
+// surface they sit beside rather than replace.
+app.MapGatewayEndpoints();
+app.MapOperationsEndpoints();
+
+// Retained, and mapped LAST on purpose: this route now answers 410 Gone with the gateway's replacement
+// address, so it is a signpost rather than a surface. See CapabilitiesEndpoints.
 app.MapCapabilitiesEndpoints();
 
 app.Run();

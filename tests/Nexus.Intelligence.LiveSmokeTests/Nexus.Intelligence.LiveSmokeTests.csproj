@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Nexus.Intelligence.LiveSmokeTests</RootNamespace>
+    <AssemblyName>Nexus.Intelligence.LiveSmokeTests</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <!-- W7G.2 GATE 9: the provider-specific AI Head smoke suite.
+
+       The three assertions here are the M-01-6.1 smoke checks (migration runbook items 12-14)
+       that samples\Nexus.Platform.SmokeHost used to carry at the Platform layer. The ownership
+       decision re-homed them: provider-specific OpenAI / Anthropic / model smoke and E2E testing
+       belongs to the AI Head, and Platform smoke is provider-neutral.
+
+       THIS PROJECT IS DELIBERATELY NOT IN Nexus.Intelligence.slnx, AND THE REASON IS DIFFERENT
+       FROM ITS PREDECESSOR'S.
+
+       The retired Platform suite was outside its solution because it could only run by hand, and
+       that is precisely how it rotted: it held a ProjectReference to a project that had been
+       deleted, and because nothing built it, nothing was red. Its being outside the solution was
+       not the root cause, but it removed the only signal that would have caught the cause.
+
+       The reason here is that these tests SPEND THE OWNER'S MONEY. Every run calls OpenAI. Putting
+       them in the solution would make every `dotnet test` in every future lane a paid vendor call,
+       and that is a decision with a cost that nobody asked this lane to make.
+
+       So the anti-rot signal is supplied separately, where it cannot be missed:
+       Nexus.Intelligence.Architecture.Tests.LiveSmokeProjectIntegrityTests asserts, IN the
+       solution and on every run, that this project's references all resolve and that this project
+       is still deliberately outside the solution. The failure that destroyed the predecessor is
+       therefore caught by a test that runs always, without spending anything. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\Nexus.Intelligence.LiveSmokeHost\Nexus.Intelligence.LiveSmokeHost.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.1" />
+  </ItemGroup>
+
+</Project>

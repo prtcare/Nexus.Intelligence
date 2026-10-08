@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Nexus.Platform.Providers.Anthropic</RootNamespace>
+    <AssemblyName>Nexus.Platform.Providers.Anthropic</AssemblyName>
+    <IsPackable>true</IsPackable>
+    <PackageId>Nexus.Platform.Providers.Anthropic</PackageId>
+    <Authors>PRT</Authors>
+    <Description>Nexus V2 - Layer 01 Core - Nexus.Platform.Providers.Anthropic</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Nexus.Platform.Contracts" Version="0.1.0-dev.20260914192251" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.11" />
+  </ItemGroup>
+
+</Project>
+

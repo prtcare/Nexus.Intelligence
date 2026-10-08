@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "description": "Configurable sample-confidence bands for DB-M24 performance summaries. A small number of observed tasks is never treated as statistically equivalent to a large sample. Bands are [Min, Max] inclusive; null Max = open-ended. Levels must belong to the DB-M24 confidence vocabulary (INSUFFICIENT | LOW | MODERATE | HIGH) and must not overlap.",
+  "bands": [
+    { "Min": 0, "Max": 4,  "Level": "INSUFFICIENT" },
+    { "Min": 5, "Max": 19, "Level": "LOW" },
+    { "Min": 20, "Max": 49, "Level": "MODERATE" },
+    { "Min": 50, "Max": null, "Level": "HIGH" }
+  ]
+}

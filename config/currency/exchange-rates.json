@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "currencyDefault": "USD",
+  "description": "Effective-dated exchange-rate evidence used by DB-M16 cost calculation. Rows are historical evidence, never rewritten: a lookup at a request timestamp resolves the single rate record effective at that instant, so historic converted costs stay reproducible.",
+  "sourcesAllowed": [ "MANUAL_VERIFIED", "CONFIGURED", "FUTURE_PROVIDER_SYNC" ],
+  "records": [
+    {
+      "ExchangeRateId": "fx-usdinr-dev-v1",
+      "BaseCurrency": "USD",
+      "QuoteCurrency": "INR",
+      "Rate": 75.0,
+      "EffectiveAtUtc": "2026-01-01T00:00:00Z",
+      "EffectiveToUtc": "2026-06-01T00:00:00Z",
+      "Source": "CONFIGURED",
+      "VerifiedAtUtc": null,
+      "ManualOverride": false,
+      "Notes": "DEV FIXTURE - not a live market rate. Historical evidence window for cost-conversion tests; replaced by fx-usdinr-dev-v2 on 2026-06-01."
+    },
+    {
+      "ExchangeRateId": "fx-usdinr-dev-v2",
+      "BaseCurrency": "USD",
+      "QuoteCurrency": "INR",
+      "Rate": 83.5,
+      "EffectiveAtUtc": "2026-06-01T00:00:00Z",
+      "EffectiveToUtc": null,
+      "Source": "CONFIGURED",
+      "VerifiedAtUtc": null,
+      "ManualOverride": false,
+      "Notes": "DEV FIXTURE - not a live market rate. Open-ended current-window fixture for USD->INR conversion."
+    }
+  ]
+}

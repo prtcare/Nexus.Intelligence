@@ -1,11 +1,10 @@
-using System.Text.RegularExpressions;
 using Nexus.Intelligence.Context.Ranking;
 using Nexus.Intelligence.Contracts;
 using Nexus.Platform.Contracts.Models;
 
 namespace Nexus.Intelligence.Core.Turns;
 
-public sealed partial class ResponseComposer : IResponseComposer
+public sealed class ResponseComposer : IResponseComposer
 {
     public ComposedResponse Compose(
         string turnId,
@@ -17,12 +16,10 @@ public sealed partial class ResponseComposer : IResponseComposer
         var contextIds = rankedContext.Select(r => r.Item.Id).ToHashSet();
         var content = modelResult.Message?.Content ?? string.Empty;
 
-        var citations = CitationPattern().Matches(content)
-            .Select(m => m.Groups["id"].Value)
-            .Distinct()
-            .Where(contextIds.Contains)
-            .Select(id => new Citation(id, null))
-            .ToList();
+        // W7F: the derivation moved to CitationExtractor so the capability gateway resolves citations
+        // from the same definition rather than a second copy of the marker pattern. Behaviour is
+        // unchanged - same pattern, same admitted-context filter, same first-appearance order.
+        var citations = CitationExtractor.Extract(content, contextIds).ToList();
 
         var persistenceHints = proposedActions
             .Select(action => new PersistenceHint(
@@ -66,8 +63,4 @@ public sealed partial class ResponseComposer : IResponseComposer
 
         return new ComposedResponse(response, decision);
     }
-
-    // Mirrors the [ctx:<id>] marker PromptAssembler embeds in the prompt; the model echoes it back to cite a source.
-    [GeneratedRegex(@"\[ctx:(?<id>[^\]]+)\]")]
-    private static partial Regex CitationPattern();
 }

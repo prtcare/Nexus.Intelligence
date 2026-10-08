@@ -2,37 +2,63 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Nexus.Intelligence.Context.Prompting;
 using Nexus.Intelligence.Contracts;
+using Nexus.Platform.Contracts.Core;
 using Nexus.Platform.Contracts.Models;
 using Nexus.Platform.Contracts.Tools;
 
 namespace Nexus.Intelligence.Core.Turns;
 
+/// <summary>
+/// Executes the tool calls a model asked for, through the tool gateway, under a governed continuation.
+/// </summary>
+/// <remarks>
+/// <para>
+/// <b>It holds no model gateway, and that is the whole of what W7D changed here.</b> The loop used to
+/// re-invoke the model itself after each round of tool results, which put up to <c>MaxIterations</c>
+/// provider calls behind a gate that had been passed once. It now calls
+/// <see cref="ContinuationInvocation"/>, which the governed path supplies, so every round is a separate
+/// governed question.
+/// </para>
+/// <para>
+/// <b>Tool calls are not re-governed per round, and that is deliberate.</b> The tools available to the
+/// loop were narrowed by governance before it was entered, and the loop can only call what it was
+/// handed — the descriptors arrive as an argument and there is no other source of them. Re-checking each
+/// call would be checking an invariant the type system already holds.
+/// </para>
+/// </remarks>
 public sealed partial class ToolLoop : IToolLoop
 {
     private const int MaxIterations = 5;
 
     private readonly IToolGateway _toolGateway;
-    private readonly IModelGateway _modelGateway;
 
-    public ToolLoop(IToolGateway toolGateway, IModelGateway modelGateway)
-    {
-        _toolGateway = toolGateway;
-        _modelGateway = modelGateway;
-    }
+    /// <summary>Composes the loop over the platform tool gateway.</summary>
+    public ToolLoop(IToolGateway toolGateway)
+        => _toolGateway = toolGateway ?? throw new ArgumentNullException(nameof(toolGateway));
 
+    /// <inheritdoc />
     public async Task<ToolLoopResult> RunAsync(
         ModelInvocationResult initialResult,
         AssembledPrompt prompt,
-        ModelDescriptor model,
         IReadOnlyList<ToolDescriptor> availableTools,
         PolicyVerdict policy,
         TurnConstraints constraints,
         InvocationIdentity identity,
+        ContinuationInvocation continueInvocation,
         CancellationToken ct = default)
     {
+        ArgumentNullException.ThrowIfNull(initialResult);
+        ArgumentNullException.ThrowIfNull(prompt);
+        ArgumentNullException.ThrowIfNull(availableTools);
+        ArgumentNullException.ThrowIfNull(policy);
+        ArgumentNullException.ThrowIfNull(constraints);
+        ArgumentNullException.ThrowIfNull(identity);
+        ArgumentNullException.ThrowIfNull(continueInvocation);
+
         var toolsById = availableTools.ToDictionary(t => t.ToolId);
         var messages = prompt.Messages.ToList();
         var proposedActions = new List<ProposedAction>();
+        var invokedToolIds = new List<string>();
         var decisions = new List<DecisionTrace>();
         var usage = ModelUsage.Zero;
         var current = initialResult;
@@ -88,6 +114,11 @@ public sealed partial class ToolLoop : IToolLoop
                     new ToolInvocation { ToolId = call.ToolId, ArgumentsJson = call.ArgumentsJson, Identity = identity },
                     ct);
 
+                // Recorded after the gateway call and not before: a tool whose invocation threw never
+                // ran, and an audit record that named it would say the execution used a capability it
+                // did not.
+                invokedToolIds.Add(call.ToolId);
+
                 messages.Add(new ModelMessage
                 {
                     Role = ModelRole.Tool,
@@ -107,14 +138,34 @@ public sealed partial class ToolLoop : IToolLoop
                 break;
             }
 
-            current = await _modelGateway.InvokeAsync(
-                new ModelInvocation { ModelId = model.ModelId, Messages = messages, Tools = availableTools, Identity = identity },
-                ct);
+            // The governed path's continuation, not a gateway. Each round is a separate invocation and
+            // therefore a separate governance question — see ContinuationInvocation's remarks for the
+            // bypass this replaced.
+            var continued = await continueInvocation(messages, ct).ConfigureAwait(false);
+
+            decisions.Add(continued.Decision);
+
+            if (!continued.Result.Success)
+            {
+                // A failed round ends the loop rather than being retried inside it. Retrying here would
+                // re-enter a gate the loop does not own, and the caller's latency ceiling covers the
+                // whole operation, so an internal retry loop is how a bounded degradation becomes a
+                // caller-visible timeout.
+                return new ToolLoopResult(continued.Result, proposedActions, usage, decisions)
+                {
+                    InvokedToolIds = invokedToolIds,
+                };
+            }
+
+            current = continued.Result;
 
             usage = Combine(usage, current.Usage);
         }
 
-        return new ToolLoopResult(current, proposedActions, usage, decisions);
+        return new ToolLoopResult(current, proposedActions, usage, decisions)
+        {
+            InvokedToolIds = invokedToolIds,
+        };
     }
 
     private static ModelUsage Combine(ModelUsage a, ModelUsage b) =>

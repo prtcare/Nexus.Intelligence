@@ -1,0 +1,17 @@
+﻿{
+    "Fixture":  "DB-M19 representative task",
+    "Status":  "RECOMMENDED",
+    "ExecutionMode":  "ASSISTED",
+    "Policy":  "routing-policy-cheapest-reliable-v1",
+    "Winner":  {
+                   "CostCurrency":  "INR",
+                   "ProviderId":  "prov-a",
+                   "ModelId":  "model-cheap",
+                   "EstimatedCost":  1.59251200,
+                   "PolicyScore":  0.41250000000000003,
+                   "ReasoningLevel":  "MEDIUM"
+               },
+    "EligibleCount":  3,
+    "RejectedCount":  0,
+    "RecommendationReason":  "Policy: routing-policy-cheapest-reliable-v1 (objective CHEAPEST_RELIABLE); ExecutionMode: ASSISTED; Status: RECOMMENDED\nSelected: prov-a/model-cheap at reasoning level MEDIUM\nPolicyScore 0.4125 (cost=0.75, success=0, firstAttemptSuccess=0, costPerSuccess=0, latency=0.75, reliability=0.75)\nestimated attempt cost 1.59251200 INR\nevidence confidence INSUFFICIENT (sample 0); verified success rate n/a; verified cost-per-success n/a INR\nEvidence reference: DB-M24/ModelPerformance/prov-a/model-cheap/tasktype=IMPLEMENTATION/complexity=MEDIUM/risk=LOW/reasoning=MEDIUM\nNot selected: prov-a/model-expensive -- PolicyScore 0.1, estimated cost 6.3700480, selectable True\nNot selected: gateway-1/model-via-gw -- PolicyScore 0.3937, estimated cost 2.2124160, selectable True"
+}
