@@ -39,9 +39,14 @@ namespace Nexus.Intelligence.Architecture.Tests;
 /// </remarks>
 public sealed class LiveSmokeProjectIntegrityTests
 {
-    private const string HostProjectRelative = @"tests\Nexus.Intelligence.LiveSmokeHost\Nexus.Intelligence.LiveSmokeHost.csproj";
-    private const string TestsProjectRelative = @"tests\Nexus.Intelligence.LiveSmokeTests\Nexus.Intelligence.LiveSmokeTests.csproj";
-    private const string TestsSourceRelative = @"tests\Nexus.Intelligence.LiveSmokeTests\LiveProviderSmokeTests.cs";
+    // FORWARD SLASHES, deliberately. These are compile-time constants because [InlineData] needs them,
+    // so they cannot be built with Path.Combine — and a verbatim backslash string is a real path on
+    // Windows and a single filename on Linux. The assertions below passed on Windows and failed on the
+    // estate's Linux CI, which is exactly the asymmetry remote CI exists to find. .NET accepts '/' as a
+    // separator on both platforms, so one spelling is correct on both.
+    private const string HostProjectRelative = "tests/Nexus.Intelligence.LiveSmokeHost/Nexus.Intelligence.LiveSmokeHost.csproj";
+    private const string TestsProjectRelative = "tests/Nexus.Intelligence.LiveSmokeTests/Nexus.Intelligence.LiveSmokeTests.csproj";
+    private const string TestsSourceRelative = "tests/Nexus.Intelligence.LiveSmokeTests/LiveProviderSmokeTests.cs";
 
     /// <summary>
     /// The three provider-specific smoke checks, by the names the migration runbook's items fix.
@@ -181,7 +186,7 @@ public sealed class LiveSmokeProjectIntegrityTests
     [Fact]
     public void LiveSmokeFixture_NamesNoVendorCredentialType()
     {
-        var directory = Path.Combine(RepositoryRoot(), @"tests\Nexus.Intelligence.LiveSmokeHost");
+        var directory = Path.Combine(RepositoryRoot(), "tests/Nexus.Intelligence.LiveSmokeHost");
 
         var sources = Directory
             .EnumerateFiles(directory, "*.cs", SearchOption.AllDirectories)
