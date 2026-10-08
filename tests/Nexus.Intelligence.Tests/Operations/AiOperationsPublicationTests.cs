@@ -351,6 +351,55 @@ public sealed class AiOperationsPublicationTests
     }
 
     [Fact]
+    public async Task The_digest_is_stable_across_a_SECOND_composition_of_the_same_facts()
+    {
+        // The defect this exists for. Every other digest test here publishes twice from ONE composition
+        // object with a fixed clock, so a volatile instant anywhere in the payload is invisible to all
+        // of them. The real failure needs two compositions — which is what two publishes are.
+        //
+        // Found on canonical main: republishing unchanged facts produced a different digest every time,
+        // because `Health.SnapshotTakenAt` was the wall-clock instant at which the composition root had
+        // rebuilt the declared health seed. The digest could not answer the one question it exists for.
+        var first = await Projection(Registry(), Catalogue());
+        var second = await Projection(Registry(), Catalogue());
+
+        // A different instant for each composition, exactly as two processes would see.
+        var firstPayload = await first.ProjectAsync();
+        await Task.Delay(15);
+        var secondPayload = await second.ProjectAsync();
+
+        Assert.Equal(
+            AiOperationsDigest.Of(firstPayload),
+            AiOperationsDigest.Of(secondPayload));
+    }
+
+    [Fact]
+    public async Task A_declared_health_snapshot_carries_no_instant_and_an_observed_one_does()
+    {
+        var declared = await Project(Registry(), Catalogue());
+
+        Assert.Equal(SeededAiHealthSnapshot.DeclaredSource, declared.Health.SnapshotSource);
+        Assert.Null(declared.Health.SnapshotTakenAt);
+
+        // Paired: an OBSERVED snapshot keeps its instant, because that one is authority data with a real
+        // observation behind it. Without this, the assertion above would pass on a projection that had
+        // simply dropped the member.
+        var observed = await (await Projection(
+            Registry(),
+            Catalogue(),
+            healthStore: new InMemoryAiHealthSnapshotStore(new AiHealthSnapshot
+            {
+                TakenAt = Now,
+                Source = "test-probe",
+                Providers = new Dictionary<string, AiModelHealthState>(),
+                Models = new Dictionary<(string, string), AiModelHealthState>(),
+            }))).ProjectAsync();
+
+        Assert.Equal("test-probe", observed.Health.SnapshotSource);
+        Assert.Equal(Now.ToString("O", CultureInfo.InvariantCulture), observed.Health.SnapshotTakenAt);
+    }
+
+    [Fact]
     public async Task The_digest_changes_when_the_facts_change()
     {
         using var first = new PublicationDirectory();
@@ -463,7 +512,8 @@ public sealed class AiOperationsPublicationTests
         AiRegistryConfiguration registry,
         IReadOnlyList<ModelDescriptor> catalogue,
         IReadOnlyList<AiProviderAdapterObservation>? adapters = null,
-        IReadOnlyList<AiContainerRegistration>? registrations = null)
+        IReadOnlyList<AiContainerRegistration>? registrations = null,
+        IAiHealthSnapshotStore? healthStore = null)
     {
         var operations = new AiOperationsConfiguration();
 
@@ -485,7 +535,7 @@ public sealed class AiOperationsPublicationTests
             operations.BudgetPolicy(),
             AiRoutingPolicy.Default,
             new StubModelCatalog(catalogue),
-            new InMemoryAiHealthSnapshotStore(SeededAiHealthSnapshot.From(registry, Now)),
+            healthStore ?? new InMemoryAiHealthSnapshotStore(SeededAiHealthSnapshot.From(registry, Now)),
             new InMemoryAiOperationsLedger(),
             new InMemoryAiOperationsLedger(),
             observation,
