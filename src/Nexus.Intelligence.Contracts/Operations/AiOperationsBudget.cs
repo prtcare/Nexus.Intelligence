@@ -403,16 +403,27 @@ public sealed record AiOperationsBudgetPolicy
     /// prerequisite.
     /// </para>
     /// <para>
-    /// <b>Refusing is available and is a line in a file with a reviewer.</b> An estate that means
-    /// "nothing runs unless we know what it costs" sets <see cref="AiBudgetUncoveredBehaviour.Refuse"/>
-    /// and every unpriceable route is refused with
-    /// <see cref="AiBudgetOutcome.RefusedUnpriced"/>. That is the fail-closed posture the directive
-    /// requires to remain expressible, and it is expressed here rather than inferred from
-    /// <see cref="OnUncoveredPricedExecution"/>, because an estate may reasonably hold one posture for
-    /// each.
+    /// <b>Refuse is the default, and it is a line in a file with a reviewer that changes it.</b> An
+    /// estate that means "nothing runs unless we know what it costs" is the shipped posture; an estate
+    /// that means "run it anyway, and record that we did not know the cost" sets
+    /// <see cref="AiBudgetUncoveredBehaviour.Allow"/> and every unpriceable route proceeds with
+    /// <see cref="AiBudgetOutcome.Unpriced"/> on its record.
+    /// </para>
+    /// <para>
+    /// <b><see cref="AiBudgetUncoveredBehaviour.Allow"/> here means "allow WITH AN UNKNOWN COST", and
+    /// never "the cost is zero".</b> The permission and the measurement are separate facts and stay
+    /// separate: the execution runs, its usage is recorded as the provider reported it, and its cost
+    /// remains unavailable. A reader that treated the permission as an amount would be reading a
+    /// decision as a measurement — the defect this member's default now prevents.
+    /// </para>
+    /// <para>
+    /// <b>Changed in W10.7A.</b> This shipped permissive, and no configuration key could change it —
+    /// so it read like a control and was not one. It is now both explicit and configurable, with a
+    /// missing key resolving to <see cref="AiBudgetUncoveredBehaviour.Refuse"/> and an unrecognised one
+    /// refusing the load rather than silently defaulting.
     /// </para>
     /// </remarks>
-    public AiBudgetUncoveredBehaviour OnUnpricedExecution { get; init; } = AiBudgetUncoveredBehaviour.Allow;
+    public AiBudgetUncoveredBehaviour OnUnpricedExecution { get; init; } = AiBudgetUncoveredBehaviour.Refuse;
 
     /// <summary>The shipped policy: available, no rules, and an uncovered priced execution is refused.</summary>
     /// <remarks>

@@ -71,6 +71,15 @@ public sealed class AiOperationsConfiguration
                 AiOperationsBudgetPolicy.Default.OnUncoveredPricedExecution,
                 $"{SectionName}:Budget:OnUncoveredPricedExecution",
                 "uncovered-execution behaviour"),
+
+            // W10.7A. Previously pinned to the contract default with NO key able to change it, which
+            // made it a control in appearance only. Absent still resolves to the default — which is now
+            // Refuse — and an unrecognised name is a load-time refusal.
+            OnUnpricedExecution = ConfigurationEnum.Parse(
+                configured.OnUnpricedExecution,
+                AiOperationsBudgetPolicy.Default.OnUnpricedExecution,
+                $"{SectionName}:Budget:OnUnpricedExecution",
+                "unpriced-execution behaviour"),
         };
 
         policy.Validate();
@@ -203,6 +212,18 @@ public sealed class AiBudgetConfigurationEntry
 
     /// <summary>What an uncovered priced execution means, by name. Absent means the shipped posture.</summary>
     public string? OnUncoveredPricedExecution { get; set; }
+
+    /// <summary>
+    /// What an execution the estate cannot price means, by name. Absent means REFUSE.
+    /// </summary>
+    /// <remarks>
+    /// <b>Absent refuses, and an unrecognised name refuses the load.</b> There is no permissive
+    /// fallback: an estate reaches "run anyway" only by writing the word, which is the whole point of
+    /// making it configurable. The name is parsed by
+    /// <see cref="ConfigurationEnum.Parse(string?, AiBudgetUncoveredBehaviour, string, string)"/>, so a
+    /// typo raises at startup rather than silently selecting a posture nobody chose.
+    /// </remarks>
+    public string? OnUnpricedExecution { get; set; }
 
     /// <summary>The ceiling rules. Empty means nothing is covered.</summary>
     public List<AiBudgetRuleConfigurationEntry> Rules { get; set; } = [];

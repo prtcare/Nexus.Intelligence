@@ -242,7 +242,7 @@ public sealed class LiveSmokeCompositionTests
         // as an unexplained refusal on a run that spends the owner's money. A comment in the fixture
         // saying "unpriced is allowed" would have been true today and unenforced tomorrow; this is
         // the version of that statement that can fail.
-        Assert.Equal(AiBudgetUncoveredBehaviour.Allow, policy.OnUnpricedExecution);
+        Assert.Equal(AiBudgetUncoveredBehaviour.Refuse, policy.OnUnpricedExecution);
     }
 
     // ============================================================================================

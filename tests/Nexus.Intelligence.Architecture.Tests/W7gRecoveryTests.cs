@@ -902,6 +902,11 @@ public sealed class W7gRecoveryTests
                 {
                     ["Available"] = true,
                     ["OnUncoveredPricedExecution"] = "Refuse",
+
+                    // W10.7A: unpriced ON PURPOSE, so it says so. The governed default now REFUSES an
+                    // execution the estate cannot price, and a recovery suite needs routes that actually
+                    // reach the provider in order to observe a circuit opening or releasing.
+                    ["OnUnpricedExecution"] = "Allow",
                     ["Rules"] = Array.Empty<object>(),
                 },
             };

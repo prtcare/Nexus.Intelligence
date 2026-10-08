@@ -83,11 +83,26 @@ public sealed class W7eOperationsConfigurationTests
         Assert.Equal(AiGovernanceVerdict.Block, refused.Verdict);
         Assert.Null(refused.RuleId);
 
-        // CONTROL, from the same evaluator: an execution with no price is outside this plane entirely,
-        // so the refusal above is about coverage and not a gate that refuses everything it is shown.
+        // W10.7A OWNER RULING: the shipped posture refuses an UNPRICED execution too, and this
+        // assertion was reversed to match. It previously read Allow, which was the pinned contract
+        // default — a posture no configuration key could change. Both postures now come from the same
+        // policy and both are refused on the committed estate, so an unpriced execution is blocked on
+        // a decision the estate actually made.
+        Assert.Equal(AiBudgetUncoveredBehaviour.Refuse, policy.OnUnpricedExecution);
+
         var unpriced = evaluator.Evaluate(Priced(null));
 
-        Assert.Equal(AiGovernanceVerdict.Allow, unpriced.Verdict);
+        Assert.Equal(AiGovernanceVerdict.Block, unpriced.Verdict);
+
+        // CONTROL, from the same evaluator: switching the ONE member that decides this permits the very
+        // same call, so the refusal above is attributable to the posture and not to a gate that refuses
+        // everything it is shown.
+        var permitted = new ConfiguredAiBudgetEvaluator(policy with
+        {
+            OnUnpricedExecution = AiBudgetUncoveredBehaviour.Allow,
+        }).Evaluate(Priced(null));
+
+        Assert.Equal(AiGovernanceVerdict.Allow, permitted.Verdict);
     }
 
     [Fact]

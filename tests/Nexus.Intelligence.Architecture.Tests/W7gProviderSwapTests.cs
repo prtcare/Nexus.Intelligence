@@ -660,6 +660,12 @@ public sealed class W7gProviderSwapTests
                         {
                             ["Available"] = true,
                             ["OnUncoveredPricedExecution"] = "Refuse",
+
+                            // W10.7A: this fixture's models are unpriced ON PURPOSE, so it must say so.
+                            // The governed default now REFUSES an execution the estate cannot price, and
+                            // this suite is about which adapter answers — a route that never runs cannot
+                            // prove anything about swapping one.
+                            ["OnUnpricedExecution"] = "Allow",
                             ["Rules"] = Array.Empty<object>(),
                         },
                     },

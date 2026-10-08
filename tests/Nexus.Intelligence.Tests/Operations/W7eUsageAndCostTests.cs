@@ -290,11 +290,18 @@ public sealed class W7eUsageAndCostTests
     }
 
     [Fact]
-    public void AnUnpricedExecution_IsNotSubjectToTheBudgetGate_EvenUnderRefuseOnUncovered()
+    public void AnUnpricedExecution_IsRefused_UnderTheGovernedDefault()
     {
-        // The gate is about PRICED execution. A model with no rates has no projection to compare
-        // against a ceiling, and refusing it would make the cost policy a ban on unpriced capacity
-        // rather than a limit on spend.
+        // W10.7A OWNER RULING — THE DEFAULT IS REFUSE, AND THIS TEST WAS REVERSED TO SAY SO.
+        //
+        // It previously asserted the opposite: that an unpriced execution was never subject to the
+        // gate, on the argument that refusing would turn a limit on spend into a ban on unpriced
+        // capacity. That argument lost. The posture it defended shipped permissive and NO CONFIGURATION
+        // KEY COULD CHANGE IT, so it read like a control and was not one — an estate that never chose to
+        // run unpriced work was running it anyway.
+        //
+        // The ruling inverts it: the estate does not run work it cannot price unless an operator writes
+        // the permission down.
         var path = GovernedPath.Compose(W7eFixture.UnpricedSole(
             budget: new AiOperationsBudgetPolicy
             {
@@ -305,7 +312,36 @@ public sealed class W7eUsageAndCostTests
 
         var outcome = Run(path);
 
+        Assert.False(Succeeded(outcome));
+
+        // The provider was NEVER REACHED. This is the load-bearing half: a refusal that still spent
+        // money would be a refusal in name only.
+        Assert.Empty(path.Model.ModelsAsked);
+    }
+
+    [Fact]
+    public void AnUnpricedExecution_Proceeds_OnlyWhenThePermissionIsWrittenDown()
+    {
+        // CONTROL for the test above, and the other side of the ruling. The same unpriced route, the
+        // same gate, the same Refuse-on-uncovered posture — and one member set the other way. An estate
+        // that means "run it anyway and record that we did not know the cost" writes Allow; nothing else
+        // about the estate changes. Without this control the test above would pass on an estate that
+        // simply refuses everything.
+        var path = GovernedPath.Compose(W7eFixture.UnpricedSole(
+            budget: new AiOperationsBudgetPolicy
+            {
+                Rules = [],
+                Available = true,
+                OnUncoveredPricedExecution = AiBudgetUncoveredBehaviour.Refuse,
+                OnUnpricedExecution = AiBudgetUncoveredBehaviour.Allow,
+            }));
+
+        var outcome = Run(path);
+
         Assert.True(Succeeded(outcome));
+
+        // Permission is not a measurement: the execution ran, and that says nothing about what it cost.
+        Assert.NotEmpty(path.Model.ModelsAsked);
     }
 
     [Fact]
