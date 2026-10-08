@@ -183,6 +183,44 @@ public sealed class AiOperationsPublicationTests
     }
 
     [Fact]
+    public async Task Only_a_hosted_service_registration_is_reported_as_hosted()
+    {
+        // Found by reading the first real canonical publication: it reported all fifty-seven of the
+        // estate's units as hosted, because the projection answered `true` for every unit that was not
+        // the probe. A member that is true of everything carries no information — and it makes the one
+        // genuinely hosted unit indistinguishable from the fifty-six that are singletons.
+        var payload = await Project(
+            registry: Registry(),
+            catalogue: [],
+            registrations:
+            [
+                new AiContainerRegistration("Nexus.Intelligence.Contracts.IAiCapabilityRouter", "Core.GovernedCapabilityRouter", "Singleton", "Nexus.Intelligence.Core"),
+                new AiContainerRegistration("Microsoft.Extensions.Hosting.IHostedService", null, "HostedService", "Microsoft.AspNetCore.Hosting"),
+                new AiContainerRegistration("Nexus.Intelligence.Api.Operations.AiHealthProbeService", null, "Singleton", "Nexus.Intelligence.Api"),
+            ]);
+
+        // Among the CONTAINER REGISTRATIONS exactly one is hosted, and it is the host's own — not the
+        // AI Head's sweep, which this estate does not compose, and not any of the singletons. The host
+        // unit itself is hosted too, and that is correct rather than part of this count.
+        var registrationsHosted = payload.Runtime.Units
+            .Where(u => u.Kind != "Host" && u.Hosted)
+            .ToArray();
+
+        Assert.Single(registrationsHosted);
+        Assert.Equal("HostedService", registrationsHosted[0].Kind);
+        Assert.StartsWith("IHostedService (from", registrationsHosted[0].UnitId, StringComparison.Ordinal);
+
+        // The singleton is NOT hosted, and the probe is not hosted because the container does not hold
+        // it — this estate's sweep is not composed.
+        Assert.False(payload.Runtime.Units.Single(u => u.UnitId == "IAiCapabilityRouter").Hosted);
+        Assert.False(payload.Runtime.Units.Single(u => u.UnitId == "AiHealthProbeService").Hosted);
+        Assert.False(payload.Health.ProbeHosted);
+
+        // Not every unit is hosted, which is the assertion that would have caught the defect directly.
+        Assert.Contains(payload.Runtime.Units, u => !u.Hosted);
+    }
+
+    [Fact]
     public async Task The_host_liveness_route_is_reported_as_observing_nothing()
     {
         var payload = await Project(registry: Registry(), catalogue: []);
@@ -417,13 +455,15 @@ public sealed class AiOperationsPublicationTests
     private static async Task<AiOperationsReadModelPayload> Project(
         AiRegistryConfiguration registry,
         IReadOnlyList<ModelDescriptor> catalogue,
-        IReadOnlyList<AiProviderAdapterObservation>? adapters = null)
-        => await (await Projection(registry, catalogue, adapters)).ProjectAsync();
+        IReadOnlyList<AiProviderAdapterObservation>? adapters = null,
+        IReadOnlyList<AiContainerRegistration>? registrations = null)
+        => await (await Projection(registry, catalogue, adapters, registrations)).ProjectAsync();
 
     private static async Task<AiOperationsPublicationProjection> Projection(
         AiRegistryConfiguration registry,
         IReadOnlyList<ModelDescriptor> catalogue,
-        IReadOnlyList<AiProviderAdapterObservation>? adapters = null)
+        IReadOnlyList<AiProviderAdapterObservation>? adapters = null,
+        IReadOnlyList<AiContainerRegistration>? registrations = null)
     {
         var operations = new AiOperationsConfiguration();
 
@@ -433,7 +473,7 @@ public sealed class AiOperationsPublicationTests
             HostName = "test-host",
             HttpSurfacePresent = true,
             MappedApiPrefixes = [new AiMappedApiSurface("/health", "host-liveness")],
-            Registrations = [],
+            Registrations = registrations ?? [],
             ProviderAdapters = adapters
                 ?? [Adapter("openai", AiProviderImplementationState.Implemented, deployed: true, configured: true)],
             HealthProbeServiceHosted = false,

@@ -462,8 +462,16 @@ public sealed class AiOperationsPublicationProjection
                 // registration the AI Head does not own has no switch here, and null says so rather
                 // than implying one that is off.
                 ConfiguredEnabled = isProbe ? _operations.ProbeInterval is not null : null,
-                Hosted = isProbe ? _runtime.HealthProbeServiceHosted : true,
-                Scheduled = true,
+
+                // Hosted means the host runs this unit under ITS OWN lifetime — which is true of an
+                // IHostedService registration and of nothing else. A singleton is resolved by the host
+                // like every other dependency; reporting it as hosted made all fifty-seven units of
+                // this estate answer yes, which is a member that carries no information and, worse,
+                // makes the one genuinely hosted unit indistinguishable from the fifty-six that are
+                // not. The probe's answer comes from the container; the generic hosted registration's
+                // answer is its own kind.
+                Hosted = isProbe ? _runtime.HealthProbeServiceHosted : kind is "HostedService",
+                Scheduled = kind is "BackgroundService" or "HostedService",
             });
         }
 
