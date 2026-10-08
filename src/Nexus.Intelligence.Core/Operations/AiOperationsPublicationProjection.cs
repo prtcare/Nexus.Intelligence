@@ -606,7 +606,13 @@ public sealed class AiOperationsPublicationProjection
             ProbeCanReachProvider = false,
 
             SnapshotSource = snapshot.Source,
-            SnapshotTakenAt = Instant(snapshot.TakenAt),
+
+            // Published only for an OBSERVED snapshot. A declared snapshot's instant is when this
+            // process read the configuration — it is rebuilt on every start, says nothing about the
+            // estate, and sitting inside the payload it made the semantic digest change on every
+            // publish of unchanged facts. That defect survived the whole test suite, because every test
+            // published twice from one composition with a fixed clock; it needs a second process.
+            SnapshotTakenAt = declaredSource ? null : Instant(snapshot.TakenAt),
             ProviderRows = providerRows,
             ModelRows = modelRows,
 

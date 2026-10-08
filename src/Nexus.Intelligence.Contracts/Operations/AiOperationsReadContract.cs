@@ -767,8 +767,31 @@ public sealed record AiHealthAuthority
     /// <summary>The snapshot's own source marker, as the health plane reports it.</summary>
     public required string SnapshotSource { get; init; }
 
-    /// <summary>When the snapshot was taken, ISO-8601 round-trip form. See <see cref="AiOperationsReadSource.ObservedAt"/>.</summary>
-    public required string SnapshotTakenAt { get; init; }
+    /// <summary>
+    /// When the snapshot was taken, ISO-8601 round-trip form — or null when it was not taken by anything.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Null is the honest value for a declared snapshot, and publishing an instant there is a defect
+    /// rather than a detail.</b> The estate's health plane has two kinds of snapshot. A probe produces
+    /// one, and its instant is authority data — a real observation with a real time, which belongs
+    /// inside the semantic digest. Configuration produces the other: the composition root rebuilds the
+    /// declared snapshot on every start, so its instant is when <em>this process</em> happened to read
+    /// the file and says nothing about the estate.
+    /// </para>
+    /// <para>
+    /// <b>Which is why this member was found by republishing, not by reading.</b> A volatile instant
+    /// inside the payload made the digest change on every publish of unchanged facts — defeating
+    /// idempotency entirely, and making the digest unable to answer the one question it exists for. It
+    /// survived the whole test suite because every test published twice from a single composition with a
+    /// fixed clock; the divergence needs a second process to appear.
+    /// </para>
+    /// <para>
+    /// <see cref="SnapshotSource"/> still names the source, so a consumer told null here can tell a
+    /// declared snapshot from an observed one and knows why there is no instant.
+    /// </para>
+    /// </remarks>
+    public string? SnapshotTakenAt { get; init; }
 
     /// <summary>The provider rows the snapshot carries.</summary>
     public required IReadOnlyList<AiHealthAxisRow> ProviderRows { get; init; }
