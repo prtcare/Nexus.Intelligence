@@ -1,6 +1,7 @@
 using Nexus.Intelligence.Contracts;
 using Nexus.Intelligence.Core.Roles;
 using Nexus.Intelligence.Core.Turns;
+using Nexus.Intelligence.Tests.Registry;
 using Nexus.Platform.Contracts.Models;
 using Xunit;
 
@@ -46,7 +47,7 @@ public sealed class AiRoleResolverTests
         var store = new InMemoryAiRoleStore(
             seedRoles: [DiscussionRole],
             seedAssignments: [DiscussionGpt41]);
-        var resolver = new AiRoleResolver(store, new FakeCatalog(Gpt41, Gpt40));
+        var resolver = new AiRoleResolver(store, new FakeCatalog(Gpt41, Gpt40), new GovernedModelRegistryStub("openai:gpt-4.1"));
 
         var resolved = await resolver.ResolveAsync(AiRole.DefaultRoleName);
 
@@ -65,7 +66,7 @@ public sealed class AiRoleResolverTests
         var store = new InMemoryAiRoleStore(
             seedRoles: [DiscussionRole],
             seedAssignments: [DiscussionGpt41 with { ModelId = "openai:gpt-5" }]);
-        var resolver = new AiRoleResolver(store, new FakeCatalog(Gpt41, Gpt40));
+        var resolver = new AiRoleResolver(store, new FakeCatalog(Gpt41, Gpt40), new GovernedModelRegistryStub("openai:gpt-4.1"));
 
         var resolved = await resolver.ResolveAsync(AiRole.DefaultRoleName);
 
@@ -81,7 +82,7 @@ public sealed class AiRoleResolverTests
         var store = new InMemoryAiRoleStore(
             seedRoles: [DiscussionRole],
             seedAssignments: [DiscussionGpt41 with { ModelId = Gpt40.ModelId }]);
-        var resolver = new AiRoleResolver(store, new FakeCatalog(Gpt41, Gpt40));
+        var resolver = new AiRoleResolver(store, new FakeCatalog(Gpt41, Gpt40), new GovernedModelRegistryStub("openai:gpt-4.1"));
 
         var resolved = await resolver.ResolveAsync(AiRole.DefaultRoleName);
 
@@ -94,7 +95,7 @@ public sealed class AiRoleResolverTests
     {
         // The role is registered, but no assignment binds it to a model.
         var store = new InMemoryAiRoleStore(seedRoles: [DiscussionRole]);
-        var resolver = new AiRoleResolver(store, new FakeCatalog(Gpt41, Gpt40));
+        var resolver = new AiRoleResolver(store, new FakeCatalog(Gpt41, Gpt40), new GovernedModelRegistryStub("openai:gpt-4.1"));
 
         var resolved = await resolver.ResolveAsync(AiRole.DefaultRoleName);
 
@@ -107,7 +108,7 @@ public sealed class AiRoleResolverTests
     [Fact]
     public async Task ResolveAsync_WhenRoleNeverRegistered_FallsThrough()
     {
-        var resolver = new AiRoleResolver(new InMemoryAiRoleStore(), new FakeCatalog(Gpt41, Gpt40));
+        var resolver = new AiRoleResolver(new InMemoryAiRoleStore(), new FakeCatalog(Gpt41, Gpt40), new GovernedModelRegistryStub("openai:gpt-4.1"));
 
         var resolved = await resolver.ResolveAsync(AiRole.DefaultRoleName);
 
@@ -176,7 +177,7 @@ public sealed class AiRoleResolverTests
         var store = new InMemoryAiRoleStore(
             seedRoles: [DiscussionRole],
             seedAssignments: [DiscussionGpt41]);
-        var resolver = new AiRoleResolver(store, new FakeCatalog(Gpt41, Gpt40));
+        var resolver = new AiRoleResolver(store, new FakeCatalog(Gpt41, Gpt40), new GovernedModelRegistryStub("openai:gpt-4.1"));
 
         var resolved = await resolver.ResolveAsync(AiRole.DefaultRoleName);
 

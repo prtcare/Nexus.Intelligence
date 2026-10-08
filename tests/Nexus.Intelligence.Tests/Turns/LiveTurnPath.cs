@@ -116,7 +116,7 @@ internal sealed class LiveTurnPath
             new PolicyGate(),
             new AgentSelector(new NoRuntimeAgents(), governed.Registry),
             governed.Registry,
-            new AiRoleResolver(roles, new FixtureModelCatalog(options.RoleModelId)),
+            new AiRoleResolver(roles, new FixtureModelCatalog(options.RoleModelId), governed.Registry),
             governed.Execution,
             new ResponseComposer(),
             new FixtureToolCatalog(options.CatalogueToolIds),
