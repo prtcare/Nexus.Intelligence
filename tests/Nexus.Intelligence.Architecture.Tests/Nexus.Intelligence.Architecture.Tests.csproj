@@ -15,6 +15,37 @@
     <ProjectReference Include="..\..\src\Nexus.Intelligence.Agents\Nexus.Intelligence.Agents.csproj" />
     <ProjectReference Include="..\..\src\Nexus.Intelligence.Memory\Nexus.Intelligence.Memory.csproj" />
     <ProjectReference Include="..\..\src\Nexus.Intelligence.Api\Nexus.Intelligence.Api.csproj" />
+    <!-- W5G / F-01: the relocated provider assertions (RelocatedProviderBoundaryTests,
+         RelocatedSecretBoundaryTests) reference Nexus.Platform.Providers.OpenAI types by
+         typeof(), so this test project does not compile without it. That is deliberate: the
+         provider's boundary and secret guards cannot silently stop covering it. -->
+    <ProjectReference Include="..\..\src\Nexus.Platform.Providers.OpenAI\Nexus.Platform.Providers.OpenAI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- W7G.2 GATE 9: the provider-specific live smoke HOST.
+
+         This reference exists to destroy a specific failure, and it is worth naming. The Platform
+         suite this lane re-homed held a ProjectReference to a project that had been deleted, and
+         because nothing in any solution built it, nothing ever went red — the rot was discovered by
+         reading, not by running. The AI Head's live TEST project is deliberately outside
+         Nexus.Intelligence.slnx (its tests cost money), so it cannot supply that signal by itself.
+
+         The host can, and does: referencing it here means every build of this solution compiles the
+         live fixture, so a host that has drifted from the estate it composes fails the default test
+         run. BUILDING IS NOT RUNNING — nothing here calls a vendor or spends anything. The vendor
+         call lives in the test project, which remains outside the solution and out of the default
+         run, exactly as the ownership decision requires. -->
+    <ProjectReference Include="..\Nexus.Intelligence.LiveSmokeHost\Nexus.Intelligence.LiveSmokeHost.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- W7F: W7fHttpSurfaceTests composes the API's route table through IEndpointRouteBuilder, which
+         is an ASP.NET Core type. The framework reference does not flow transitively from the
+         Microsoft.NET.Sdk.Web project referenced above, so it is stated here. Test-only and
+         build-time only: nothing in this project is packaged, and no application assembly gains a
+         dependency from it. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>

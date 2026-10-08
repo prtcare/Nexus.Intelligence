@@ -11,17 +11,46 @@
   <ItemGroup>
     <ProjectReference Include="..\Nexus.Intelligence.Core\Nexus.Intelligence.Core.csproj" />
     <ProjectReference Include="..\Nexus.Intelligence.Contracts\Nexus.Intelligence.Contracts.csproj" />
+    <!-- W5G / F-01: the OpenAI provider is now a sibling project in this repository, so it
+         is consumed as a ProjectReference. It replaces
+         <PackageReference Include="Nexus.Platform.Providers.OpenAI" Version="0.1.0-*" />,
+         whose package ships the very same Nexus.Platform.Providers.OpenAI.* types: holding
+         both would give this project two live copies of OpenAIModelGateway and
+         OpenAIOptions, the duplicate type identity TASK 7 forbids. This mirrors exactly
+         what was already done for Nexus.Platform.Providers.Anthropic in W5/W4L-306. -->
+    <ProjectReference Include="..\Nexus.Platform.Providers.OpenAI\Nexus.Platform.Providers.OpenAI.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Nexus.Platform.Contracts" Version="0.1.0-*" />
-    <PackageReference Include="Nexus.Platform.Core" Version="0.1.0-*" />
-    <PackageReference Include="Nexus.Platform.Identity" Version="0.1.0-*" />
-    <PackageReference Include="Nexus.Platform.Persistence" Version="0.1.0-*" />
-    <PackageReference Include="Nexus.Platform.Providers.Anthropic" Version="0.1.0-*" />
-    <PackageReference Include="Nexus.Platform.Providers.OpenAI" Version="0.1.0-*" />
-    <PackageReference Include="Nexus.Platform.Tools" Version="0.1.0-*" />
+    <!-- W5G TASK 5: pinned to the exact immutable release candidate instead of "0.1.0-*". -->
+    <PackageReference Include="Nexus.Platform.Contracts" Version="0.1.0-dev.20260914192251" />
+    <!-- W5G: re-pinned for the same reason, and required for a second: Program.cs calls
+         AddNexusPlatform, which is this package's composition root. It must be the NEW
+         build, because the old one's AddNexusPlatform still calls AddNexusAi and registers
+         IModelCatalog, IModelGateway and IUsageMeter, which are AI-owned types. Leaving the old
+         version would have been a live DI split: the AI Head's own registrations and a
+         Platform package's registrations both claiming the model domain. -->
+    <PackageReference Include="Nexus.Platform.Core" Version="0.1.0-dev.20260912172543" />
+    <!-- W5H TASK 2: the floating "0.1.0-*" is replaced by an exact immutable version. The float
+         resolved 0.1.0-dev.20260825143450, which was packed from Platform commit 1f78dde0 and
+         therefore declares a dependency floor of Nexus.Platform.Contracts >= 0.1.0-dev.20260825143450
+         - a build that predates the Governance -> Core rename at 8ca1dfd. That floor is satisfied
+         by the higher exact Contracts pin above, so it never won the resolution, but it kept the
+         stale build reachable in the graph. 0.1.0-dev.20260912172543 was packed from the certified
+         source f139e5d1 and declares Contracts >= 0.1.0-dev.20260912172543, the published version.
+         NOTE: the nuspec dependency is unbracketed, so it is a MINIMUM, not an exact pin - a
+         higher Contracts would still satisfy it. The exactness that matters here is this project's
+         own direct pin. -->
+    <PackageReference Include="Nexus.Platform.Identity" Version="0.1.0-dev.20260912172543" />
+    <PackageReference Include="Nexus.Platform.Persistence" Version="0.1.0-dev.20260825143450" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+    <!-- W5 / W4L-306 SPLIT: removed Nexus.Platform.Providers.Anthropic and Nexus.Platform.Tools.
+         Both were certified "NO - zero references". Re-verified at move time: the only occurrences
+         of either name in this project were prose TODO comments in Program.cs:16 and
+         Tooling/EmptyTool{Catalog,Gateway}.cs - zero using-directives, zero type references.
+         NOTE: measurement also found Nexus.Platform.Identity and Nexus.Platform.Persistence carry
+         zero code references. W4L-306 records both as "stays", so they were NOT removed - see
+         W5_PLATFORM_AI_EXTRACTION.md discrepancy note. -->
   </ItemGroup>
 
 </Project>

@@ -14,9 +14,35 @@
     <ProjectReference Include="..\Nexus.Intelligence.Memory\Nexus.Intelligence.Memory.csproj" />
   </ItemGroup>
 
+  <!-- W5G TASK 5: the floating "0.1.0-*" is replaced by an exact immutable version. A
+       floating reference is what let D-7 happen: restore silently resolved
+       0.1.0-dev.20260825143450, published from Platform commit 1f78dde0, which PREDATES
+       commit 8ca1dfd. That commit renamed Nexus.Platform.Contracts.Governance to
+       .Core and moved IUsageMeter/UsageRecord into .Models, so the stale artifact does
+       contain every type this project needs - under namespaces current source no longer
+       declares. The failure surfaced as compiler errors naming InvocationIdentity, and
+       read like missing types because a moved type and a deleted one both surface as
+       CS0246. The version below was built from Platform commit
+       f139e5d1181755dad6ce135d6bdcef9243c60de5 and embeds it in its own nuspec. -->
   <ItemGroup>
-    <PackageReference Include="Nexus.Platform.Contracts" Version="0.1.0-*" />
-    <PackageReference Include="Nexus.Platform.Core" Version="0.1.0-*" />
+    <PackageReference Include="Nexus.Platform.Contracts" Version="0.1.0-dev.20260914192251" />
+    <!-- W7C: the registry is configuration, so the configuration abstraction has to be
+         referenceable where the registry is parsed. Parsing lives in Core rather than in the
+         composition root because the thing under test is the parser - malformed capability
+         identifiers, malformed secret references, duplicate model identities - and a parser
+         that can only be exercised through a full host is a parser whose failure modes are
+         found in production. This is a Binder/Abstractions reference only: no configuration
+         PROVIDER is referenced, so nothing here can read a file or an environment variable,
+         and Core still cannot reach the environment the way a secret resolver can. -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.11" />
+
+    <!-- W5G: the Nexus.Platform.Core reference was REMOVED, not re-pinned. Its only use
+         here was the model-domain namespace this project now compiles itself, and the
+         published Nexus.Platform.Core ships four of those same types (measured:
+         AggregatingModelCatalog, IModelCatalogSource, INamedModelGateway,
+         RoutingModelGateway). Keeping it would have put two live copies of each into this
+         assembly's dependency closure - the D-a silent-DI-split and D-b CS0104 hazard
+         TASK 7 forbids. Nothing else in Nexus.Intelligence.Core uses Platform.Core. -->
   </ItemGroup>
 
 </Project>

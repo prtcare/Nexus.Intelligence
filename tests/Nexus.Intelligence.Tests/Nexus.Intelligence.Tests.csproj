@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Nexus.Intelligence.Context\Nexus.Intelligence.Context.csproj" />
     <ProjectReference Include="..\..\src\Nexus.Intelligence.Contracts\Nexus.Intelligence.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\Nexus.Intelligence.Core\Nexus.Intelligence.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

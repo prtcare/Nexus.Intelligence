@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "description": "DB-M16 cost-calculator behaviour. No pricing rates live here (all prices come from config/pricing/pricing-catalogue.json via Get-AiPriceAt). No secrets.",
+  "ReasoningTokenBilling": "INCLUDED_IN_OUTPUT",
+  "note": "INCLUDED_IN_OUTPUT (default): reasoning tokens are covered by the OutputPricePerMillion dimension and are never double-charged. SEPARATE: reasoning tokens are priced separately via the pricing record's ReasoningTokenPricePerMillion. The choice is config data, never inferred from a provider name."
+}

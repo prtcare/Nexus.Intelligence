@@ -4,7 +4,16 @@ namespace Nexus.Intelligence.Core.Turns;
 
 public sealed class PolicyGate : IPolicyGate
 {
-    private const string ToolWildcard = "tools:*";
+    /// <summary>
+    /// The permission key that grants a caller every tool the pipeline offers.
+    /// </summary>
+    /// <remarks>
+    /// Internal rather than private because <see cref="TurnEnvelope"/> derives the governed requester's
+    /// side-effect permission from the same key this gate reads. Two spellings of one key would let a
+    /// caller pass the platform gate and fail the governed one — or worse, pass both while the estate
+    /// believed only one was in use.
+    /// </remarks>
+    internal const string ToolWildcard = "tools:*";
 
     public PolicyGateResult Evaluate(ActorRef actor, TurnConstraints constraints)
     {

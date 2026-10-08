@@ -1,0 +1,32 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Nexus.Platform.Providers.OpenAI</RootNamespace>
+    <AssemblyName>Nexus.Platform.Providers.OpenAI</AssemblyName>
+    <IsPackable>true</IsPackable>
+    <PackageId>Nexus.Platform.Providers.OpenAI</PackageId>
+    <Authors>PRT</Authors>
+    <Description>Nexus V2 - Nexus.Platform.Providers.OpenAI</Description>
+  </PropertyGroup>
+
+  <!-- W5G / W4L-201 ADAPT.
+       Inside the AI Head repository there is no ..\Nexus.Platform.Core\ and no
+       ..\Nexus.Platform.Contracts\ project. The provider's ONLY Platform.Core
+       dependency was the two model-domain extension points (INamedModelGateway,
+       IModelCatalogSource), which F-01 relocates to the AI Head; every other
+       runtime dependency is a neutral Nexus.Platform.Contracts contract and is
+       consumed here exactly as Nexus.Platform.Providers.Anthropic already consumes
+       it: as a pinned package from the cross-Head contract boundary. -->
+  <ItemGroup>
+    <ProjectReference Include="..\Nexus.Intelligence.Core\Nexus.Intelligence.Core.csproj" />
+    <PackageReference Include="Nexus.Platform.Contracts" Version="0.1.0-dev.20260914192251" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.11" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.11" />
+    <PackageReference Include="OpenAI" Version="2.13.0" />
+  </ItemGroup>
+
+</Project>

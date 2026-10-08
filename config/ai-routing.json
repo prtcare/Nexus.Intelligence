@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "description": "DB-M14 top-level AI routing configuration. MANUAL is the ONLY active runtime mode. ASSISTED and AUTO are represented as future values only - neither activates automated AI execution. Routing policy is explicitly NOT implemented (DB-M19); these defaults are inert.",
+  "executionMode": "MANUAL",
+  "allowedRuntimeModes": ["MANUAL"],
+  "futureModes": {
+    "ASSISTED": "DevBridge recommends model/cost/reasoning/budget/fallback; human executes. Enable only after DB-M19 dry-run gate G3.",
+    "AUTO": "DevBridge invokes providers itself. NOT ALLOWED until a governance gate (new ADR + workbook update + explicit enable flag + kill switch) passes."
+  },
+  "roles": {
+    "DefaultCheapModel": "deepseek-v4-flash",
+    "DefaultCodingModel": "deepseek-v4-flash",
+    "DefaultReviewer": "claude-opus-5",
+    "DefaultPremiumModel": "claude-opus-5"
+  },
+  "routingDefaults": {
+    "enabled": false,
+    "policyVersion": "0.0.0",
+    "policyVersionNote": "Routing policy is not implemented until DB-M19. Defaults are inert configuration, not routing."
+  },
+  "notes": "DB-M14. NO AUTOMATIC AI EXECUTION EXISTS YET. All providers and models in providers.json/models.json are Enabled=false / Configured=false."
+}

@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Nexus.Intelligence.LiveSmokeHost</RootNamespace>
+    <AssemblyName>Nexus.Intelligence.LiveSmokeHost</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <!-- The estate's own analysers apply; this is a host, not a test, so the test SDK is absent. -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- W7G.2 GATE 9: the AI Head's live provider smoke host.
+
+       This is the AI Head half of the ownership decision that retired
+       samples/Nexus.Platform.SmokeHost from Platform. Platform smoke and testing is
+       provider-neutral; provider-specific OpenAI / Anthropic / model smoke and E2E testing
+       is the AI Head's, and this is where it lives.
+
+       It is a separate console project, and that is a requirement rather than a
+       preference: one of the three re-homed assertions is that a real assistant message
+       SURVIVES A PROCESS RESTART, and no process can restart itself. The suite launches THIS
+       host as a child process to write the message, and launches it a second time to read
+       it back.
+
+       Two deliberate differences from the Platform sample it replaces, both of which
+       remove a defect rather than carry it across:
+         1. It holds no C:\Personal path. The retired sample's StoreSecretResolver
+            hardcoded C:\Personal\Nexus.Intelligence\src\Nexus.Intelligence.Api to find a
+            user-secrets store; credential custody here is the environment, through the
+            estate's own neutral EnvironmentSecretResolver, so there is no path to hardcode.
+         2. It composes the AI Head's real composition root (AddNexusIntelligence) and the
+            real provider adapter, so what it drives is the estate rather than a
+            reimplementation of it. -->
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Nexus.Intelligence.Api\Nexus.Intelligence.Api.csproj" />
+    <ProjectReference Include="..\..\src\Nexus.Platform.Providers.OpenAI\Nexus.Platform.Providers.OpenAI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+</Project>
