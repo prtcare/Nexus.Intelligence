@@ -727,26 +727,37 @@ public sealed class W7gProviderSwapTests
         /// <summary>How many times this implementation was reached.</summary>
         public int Count => ModelsAsked.Count;
 
-        public Task<ModelInvocationResult> InvokeAsync(ModelInvocation invocation, CancellationToken ct = default)
+        public Task<ModelGatewayOutcome> InvokeReportingUsageAsync(ModelInvocation invocation, CancellationToken ct = default)
         {
             ModelsAsked.Add(invocation.ModelId);
 
-            return Task.FromResult(new ModelInvocationResult
+            // A REAL measurement: this fake reports 25 in and 5 out, so the outcome carries counts
+            // rather than nulls. A double that reported nothing would exercise the unreported path by
+            // accident and make the swap assertions pass for the wrong reason.
+            return Task.FromResult(new ModelGatewayOutcome
             {
-                Success = true,
-                Message = new ModelMessage
+                Result = new ModelInvocationResult
                 {
-                    Role = ModelRole.Assistant,
+                    Success = true,
+                    Message = new ModelMessage
+                    {
+                        Role = ModelRole.Assistant,
 
-                    // The vendor is NOT written into the answer. A fake that echoed it would make the
-                    // "the response names no vendor" assertions pass or fail on the fixture rather
-                    // than on the estate's projection.
-                    Content = "answered",
+                        // The vendor is NOT written into the answer. A fake that echoed it would make the
+                        // "the response names no vendor" assertions pass or fail on the fixture rather
+                        // than on the estate's projection.
+                        Content = "answered",
+                    },
+                    Usage = new ModelUsage(25, 5, 0m),
+                    ModelUsed = invocation.ModelId,
                 },
-                Usage = new ModelUsage(25, 5, 0m),
-                ModelUsed = invocation.ModelId,
+                TokensIn = 25,
+                TokensOut = 5,
             });
         }
+
+        public async Task<ModelInvocationResult> InvokeAsync(ModelInvocation invocation, CancellationToken ct = default)
+            => (await InvokeReportingUsageAsync(invocation, ct).ConfigureAwait(false)).Result;
 
         public async IAsyncEnumerable<ModelStreamChunk> StreamAsync(
             ModelInvocation invocation,

@@ -846,7 +846,11 @@ public sealed class W7f2HttpEndToEndTests
                         Usage = _usage,
                         ModelUsed = modelId,
                     },
-                    new DecisionTrace($"Invoked model '{modelId}'", "W7F.2 seam: declared failing.", [])));
+                    new DecisionTrace($"Invoked model '{modelId}'", "W7F.2 seam: declared failing.", []))
+                {
+                    TokensIn = _usage.TokensIn,
+                    TokensOut = _usage.TokensOut,
+                });
             }
 
             return Task.FromResult(new ModelStepResult(
@@ -857,7 +861,11 @@ public sealed class W7f2HttpEndToEndTests
                     Usage = _usage,
                     ModelUsed = modelId,
                 },
-                new DecisionTrace($"Invoked model '{modelId}'", "W7F.2 seam.", [])));
+                new DecisionTrace($"Invoked model '{modelId}'", "W7F.2 seam.", []))
+            {
+                TokensIn = _usage.TokensIn,
+                TokensOut = _usage.TokensOut,
+            });
         }
     }
 

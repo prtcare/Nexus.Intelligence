@@ -107,14 +107,37 @@ public sealed record AiUsageEntry
     /// <summary>The workspace, where the caller named one.</summary>
     public string? WorkspaceId { get; init; }
 
-    /// <summary>Input tokens consumed.</summary>
-    public int TokensIn { get; init; }
+    /// <summary>
+    /// Input tokens the provider reported, or <c>null</c> when the provider reported no usage at all.
+    /// </summary>
+    /// <remarks>
+    /// <b>Null is not zero, and this member exists to keep them apart.</b> A provider that returns no
+    /// usage block has told the estate nothing about how much work it did; recording <c>0</c> for that
+    /// case asserts the call consumed no tokens, which is a measurement the estate does not have. The
+    /// distinction is load-bearing rather than cosmetic: the cost basis is derived from this value, so a
+    /// fabricated zero becomes a fabricated <em>measured</em> cost of zero — a figure every budget
+    /// ceiling would pass.
+    /// </remarks>
+    public int? TokensIn { get; init; }
 
-    /// <summary>Output tokens produced.</summary>
-    public int TokensOut { get; init; }
+    /// <summary>
+    /// Output tokens the provider reported, or <c>null</c> when the provider reported no usage at all.
+    /// </summary>
+    /// <remarks>See <see cref="TokensIn"/> — the two are null together or not at all.</remarks>
+    public int? TokensOut { get; init; }
 
-    /// <summary>Total tokens. Derived, so it cannot disagree with its parts.</summary>
-    public int TotalTokens => TokensIn + TokensOut;
+    /// <summary>
+    /// Total tokens, or <c>null</c> when either half was unreported. Derived, so it cannot disagree
+    /// with its parts.
+    /// </summary>
+    /// <remarks>
+    /// Null propagates rather than defaulting the missing half to zero: a total computed from one
+    /// reported half and one fabricated half would be a number that looks measured and is not.
+    /// </remarks>
+    public int? TotalTokens => TokensIn is { } input && TokensOut is { } output ? input + output : null;
+
+    /// <summary>True when the provider reported both token counts, so the entry carries a measurement.</summary>
+    public bool HasReportedUsage => TokensIn is not null && TokensOut is not null;
 
     /// <summary>What the execution was predicted to cost, where pricing metadata allowed a prediction.</summary>
     public decimal? EstimatedCost { get; init; }
@@ -205,14 +228,30 @@ public sealed record AiUsageAggregate
     /// <summary>How many entries fell in this bucket.</summary>
     public required int Executions { get; init; }
 
-    /// <summary>Total input tokens.</summary>
+    /// <summary>Total input tokens across the entries that REPORTED usage.</summary>
+    /// <remarks>
+    /// A sum over the reported subset, and the complement is counted in <see cref="UnreportedUsage"/>
+    /// rather than folded in. The shape is deliberate and matches how cost is already reported beside
+    /// <see cref="UnpricedExecutions"/>: a token total that silently added a zero for every entry the
+    /// provider said nothing about would be indistinguishable from a real total, and a reader who
+    /// cannot see the unreported count will read it as one.
+    /// </remarks>
     public required int TokensIn { get; init; }
 
-    /// <summary>Total output tokens.</summary>
+    /// <summary>Total output tokens across the entries that REPORTED usage.</summary>
+    /// <remarks>See <see cref="TokensIn"/>.</remarks>
     public required int TokensOut { get; init; }
 
-    /// <summary>Total tokens.</summary>
+    /// <summary>Total tokens across the entries that reported usage.</summary>
     public int TotalTokens => TokensIn + TokensOut;
+
+    /// <summary>How many entries in the bucket had NO provider-reported usage at all.</summary>
+    /// <remarks>
+    /// The disclosure obligation that keeps <see cref="TokensIn"/> honest. An entry counted here
+    /// contributed nothing to the token totals and nothing to the cost, because the estate has no
+    /// measurement for it — which is a different fact from a measured zero.
+    /// </remarks>
+    public int UnreportedUsage { get; init; }
 
     /// <summary>Total authoritative cost across the bucket, in <see cref="Currency"/>.</summary>
     public required decimal Cost { get; init; }
@@ -252,6 +291,10 @@ public sealed record AiUsageReport
 
     /// <summary>Total tokens across every bucket.</summary>
     public int TotalTokens => TokensIn + TokensOut;
+
+    /// <summary>How many executions across every bucket had no provider-reported usage.</summary>
+    /// <remarks>See <see cref="AiUsageAggregate.UnreportedUsage"/> — the same obligation, at report level.</remarks>
+    public int UnreportedUsage => Buckets.Sum(b => b.UnreportedUsage);
 
     /// <summary>Total authoritative cost across every bucket.</summary>
     public decimal Cost => Buckets.Sum(b => b.Cost);

@@ -342,7 +342,7 @@ public sealed class W7eLivePathTests
         // TASK 14's "cost totals are deterministic" and its wider claim: a routing decision is
         // reproducible from the state it read. Two runs over the same estate produce the same route,
         // the same tokens, the same cost and the same status - so a budget decision is not a coin toss.
-        static (string Model, int TokensIn, decimal? Cost, AiExecutionStatus Status) Once()
+        static (string Model, int? TokensIn, decimal? Cost, AiExecutionStatus Status) Once()
         {
             var path = GovernedPath.Compose(Priced(tokensIn: 3_000, tokensOut: 700));
             var outcome = Run(path, "req-w7e-determinism");

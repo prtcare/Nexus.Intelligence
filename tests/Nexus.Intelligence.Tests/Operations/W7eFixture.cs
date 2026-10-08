@@ -284,13 +284,15 @@ internal static class W7eFixture
         int tokensIn = 1_000,
         int tokensOut = 1_000,
         IReadOnlyList<string>? failingModels = null,
-        ModelFailureKind? failingClassification = null) => new()
+        ModelFailureKind? failingClassification = null,
+        bool usageReported = true) => new()
         {
             Providers = [Route(PrimaryProvider, priority: 10)],
             Models = [ModelFor(PrimaryModel, PrimaryProvider, inputRate: 0.50m, outputRate: 1.50m)],
             Budget = budget,
             TokensIn = tokensIn,
             TokensOut = tokensOut,
+            UsageReported = usageReported,
             FailingModels = [.. failingModels ?? []],
             FailingClassification = failingClassification,
         };

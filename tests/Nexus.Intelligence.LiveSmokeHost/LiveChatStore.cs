@@ -66,8 +66,8 @@ public sealed record LiveTurnRecord(
     string Prompt,
     string? AssistantOutput,
     string ExecutionId,
-    int InputTokens,
-    int OutputTokens,
+    int? InputTokens,
+    int? OutputTokens,
     DateTimeOffset RecordedAt)
 {
     /// <summary>

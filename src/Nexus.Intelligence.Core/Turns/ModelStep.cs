@@ -3,6 +3,7 @@ using Nexus.Intelligence.Contracts;
 using Nexus.Platform.Contracts.Core;
 using Nexus.Platform.Contracts.Models;
 using Nexus.Platform.Contracts.Tools;
+using Nexus.Platform.Core.Models;
 
 namespace Nexus.Intelligence.Core.Turns;
 
@@ -26,10 +27,15 @@ namespace Nexus.Intelligence.Core.Turns;
 /// </remarks>
 public sealed class ModelStep : IModelStep
 {
-    private readonly IModelGateway _gateway;
+    private readonly IUsageReportingModelGateway _gateway;
 
     /// <summary>Composes the step over the platform model gateway.</summary>
-    public ModelStep(IModelGateway gateway)
+    /// <remarks>
+    /// <see cref="IUsageReportingModelGateway"/> rather than <see cref="IModelGateway"/>: the governed
+    /// path needs to know whether the provider reported usage, and the Platform port cannot carry that
+    /// fact. Both are satisfied by the same registered instance.
+    /// </remarks>
+    public ModelStep(IUsageReportingModelGateway gateway)
         => _gateway = gateway ?? throw new ArgumentNullException(nameof(gateway));
 
     /// <inheritdoc />
@@ -55,7 +61,8 @@ public sealed class ModelStep : IModelStep
             Identity = identity
         };
 
-        var result = await _gateway.InvokeAsync(invocation, ct).ConfigureAwait(false);
+        var outcome = await _gateway.InvokeReportingUsageAsync(invocation, ct).ConfigureAwait(false);
+        var result = outcome.Result;
 
         var decision = result.Success
             ? new DecisionTrace(
@@ -67,6 +74,11 @@ public sealed class ModelStep : IModelStep
                 result.Error ?? "Unknown model gateway error",
                 []);
 
-        return new ModelStepResult(result, decision);
+        // The measurement travels beside the Platform result, which cannot express its absence.
+        return new ModelStepResult(result, decision)
+        {
+            TokensIn = outcome.TokensIn,
+            TokensOut = outcome.TokensOut,
+        };
     }
 }

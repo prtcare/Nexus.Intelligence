@@ -134,6 +134,18 @@ internal sealed record GovernedPathOptions
     /// <summary>Output tokens the recording seam reports.</summary>
     public int TokensOut { get; init; }
 
+    /// <summary>
+    /// Whether the seam's provider REPORTED a usage block at all. Default true.
+    /// </summary>
+    /// <remarks>
+    /// <b>This is the difference between "the provider said zero" and "the provider said nothing", and
+    /// the fixture has to be able to express both.</b> When false the seam reports no measurement — the
+    /// token counts above are ignored — which is what a provider that returns no usage block does. A
+    /// fixture that could only report numbers would make the unreported case untestable, and that case
+    /// is the one that used to be recorded as a measured cost of zero.
+    /// </remarks>
+    public bool UsageReported { get; init; } = true;
+
     /// <summary>The reliability thresholds. Null means the shipped policy.</summary>
     public AiReliabilityPolicy? Reliability { get; init; }
 
@@ -277,7 +289,8 @@ internal sealed class GovernedPath
             options.Replies,
             options.FailingModels,
             new ModelUsage(options.TokensIn, options.TokensOut, 0m),
-            options.FailingClassification);
+            options.FailingClassification,
+            options.UsageReported);
         var gateway = new RecordingToolGateway();
         var policy = Policy(registry, options);
         var evaluator = new DeterministicAiGovernanceEvaluator(policy);
@@ -780,17 +793,27 @@ internal sealed class RecordingModelStep : IModelStep
     private readonly HashSet<string> _failing;
     private readonly ModelUsage _usage;
 
+    /// <summary>What the provider reported, or nulls when it reported nothing — see <see cref="GovernedPathOptions.UsageReported"/>.</summary>
+    private readonly int? _tokensIn;
+    private readonly int? _tokensOut;
+
     /// <summary>The classification this seam puts on a failure it was told to produce, if any.</summary>
     private readonly ModelFailureKind? _failingClassification;
     public RecordingModelStep(
         IReadOnlyList<string> replies,
         IReadOnlyList<string>? failingModels = null,
         ModelUsage? usage = null,
-        ModelFailureKind? failingClassification = null)
+        ModelFailureKind? failingClassification = null,
+        bool usageReported = true)
     {
         _replies = replies.Count == 0 ? ["Nothing to do."] : replies;
         _failing = [.. failingModels ?? []];
         _usage = usage ?? ModelUsage.Zero;
+
+        // Null when the provider reported nothing. `_usage` keeps the Platform shape, which cannot say
+        // so — see ModelGatewayOutcome for why the two must be carried separately.
+        _tokensIn = usageReported ? _usage.TokensIn : null;
+        _tokensOut = usageReported ? _usage.TokensOut : null;
         _failingClassification = failingClassification;
     }
 
@@ -837,7 +860,14 @@ internal sealed class RecordingModelStep : IModelStep
                     Usage = _usage,
                     ModelUsed = modelId,
                 },
-                new DecisionTrace($"Invoked model '{modelId}'", "W7D test seam: declared failing.", [])));
+                new DecisionTrace($"Invoked model '{modelId}'", "W7D test seam: declared failing.", []))
+            {
+                // The seam reports what the fixture told it to: a measurement, or nothing at all when
+                // UsageReported is false. A fake that always reported numbers would make the unreported
+                // case — the one that used to be recorded as a measured cost of zero — untestable.
+                TokensIn = _tokensIn,
+                TokensOut = _tokensOut,
+            });
         }
 
         var reply = _replies[System.Math.Min(Invocations.Count - 1, _replies.Count - 1)];
@@ -850,7 +880,12 @@ internal sealed class RecordingModelStep : IModelStep
                 Usage = _usage,
                 ModelUsed = modelId,
             },
-            new DecisionTrace($"Invoked model '{modelId}'", "W7D test seam.", [])));
+            new DecisionTrace($"Invoked model '{modelId}'", "W7D test seam.", []))
+        {
+            // Reported or absent, per the fixture — see the failing path above.
+            TokensIn = _tokensIn,
+            TokensOut = _tokensOut,
+        });
     }
 }
 

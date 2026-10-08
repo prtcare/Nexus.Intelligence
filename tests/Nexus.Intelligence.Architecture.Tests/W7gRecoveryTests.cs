@@ -990,7 +990,7 @@ public sealed class W7gRecoveryTests
         /// <summary>The vendor token this implementation answers to.</summary>
         public string Vendor { get; } = vendor;
 
-        public Task<ModelInvocationResult> InvokeAsync(ModelInvocation invocation, CancellationToken ct = default)
+        public Task<ModelGatewayOutcome> InvokeReportingUsageAsync(ModelInvocation invocation, CancellationToken ct = default)
         {
             Interlocked.Increment(ref Count);
 
@@ -1002,24 +1002,34 @@ public sealed class W7gRecoveryTests
                 // and it must not reach the caller.
                 LastError = ProviderMarkerText;
 
-                return Task.FromResult(new ModelInvocationResult
+                // Unmeasured: a call that failed reported no usage.
+                return Task.FromResult(ModelGatewayOutcome.Unmeasured(new ModelInvocationResult
                 {
                     Success = false,
                     Error = ProviderMarkerText,
                     ModelUsed = invocation.ModelId,
-                });
+                }));
             }
 
             LastError = null;
 
-            return Task.FromResult(new ModelInvocationResult
+            // A REAL measurement, so the served path carries counts rather than nulls.
+            return Task.FromResult(new ModelGatewayOutcome
             {
-                Success = true,
-                Message = new ModelMessage { Role = ModelRole.Assistant, Content = "answered" },
-                Usage = new ModelUsage(25, 5, 0m),
-                ModelUsed = invocation.ModelId,
+                Result = new ModelInvocationResult
+                {
+                    Success = true,
+                    Message = new ModelMessage { Role = ModelRole.Assistant, Content = "answered" },
+                    Usage = new ModelUsage(25, 5, 0m),
+                    ModelUsed = invocation.ModelId,
+                },
+                TokensIn = 25,
+                TokensOut = 5,
             });
         }
+
+        public async Task<ModelInvocationResult> InvokeAsync(ModelInvocation invocation, CancellationToken ct = default)
+            => (await InvokeReportingUsageAsync(invocation, ct).ConfigureAwait(false)).Result;
 
         public async IAsyncEnumerable<ModelStreamChunk> StreamAsync(
             ModelInvocation invocation,

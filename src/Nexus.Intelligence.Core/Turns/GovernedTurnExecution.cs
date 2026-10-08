@@ -857,8 +857,13 @@ public sealed class GovernedTurnExecution : IGovernedTurnExecution
             ProviderId = route.Candidate.ProviderId,
             Tier = recording.Tier,
             IsFallback = route.IsFallback,
-            TokensIn = result.Usage.TokensIn,
-            TokensOut = result.Usage.TokensOut,
+            // FROM THE STEP RESULT, NOT THE PLATFORM RESULT. `result.Usage` is non-nullable and
+            // defaults to zero, so reading it here recorded a fabricated 0 for every call whose
+            // provider reported no usage — and the cost basis below is derived from these counts, so
+            // that 0 became a "measured" cost of nothing. invocation.Result carries the true
+            // measurement, null when there was none.
+            TokensIn = invocation.Result.TokensIn,
+            TokensOut = invocation.Result.TokensOut,
 
             // The prediction the budget decision rested on, carried beside the measurement rather than
             // replaced by it. Which of the two is authoritative is the ledger entry's own business —
@@ -1478,11 +1483,20 @@ public sealed class GovernedTurnExecution : IGovernedTurnExecution
         /// <summary>The category of a failure no outcome carries — a degraded tool loop.</summary>
         public AiFailureCategory? FailureCategory { get; set; }
 
-        /// <summary>Input tokens across every invocation of this execution.</summary>
-        public int TokensIn { get; private set; }
+        /// <summary>
+        /// Input tokens across every invocation of this execution, or <c>null</c> when any invocation
+        /// reported no usage.
+        /// </summary>
+        /// <remarks>
+        /// <b>A sum with an unknown part is unknown.</b> Once one attempt's usage is unreported the
+        /// execution has no token total, and reporting the sum of the attempts that did report would be
+        /// a number that looks complete and is not.
+        /// </remarks>
+        public int? TokensIn { get; private set; } = 0;
 
-        /// <summary>Output tokens across every invocation of this execution.</summary>
-        public int TokensOut { get; private set; }
+        /// <summary>Output tokens across every invocation of this execution, or <c>null</c> when any did not report.</summary>
+        /// <remarks>See <see cref="TokensIn"/>.</remarks>
+        public int? TokensOut { get; private set; } = 0;
 
         /// <summary>The execution's cost, accumulated across its invocations.</summary>
         public ExecutionCost Cost { get; private set; } = ExecutionCost.Empty;
@@ -1511,8 +1525,13 @@ public sealed class GovernedTurnExecution : IGovernedTurnExecution
 
             if (call.Entry is { } entry)
             {
-                TokensIn += entry.TokensIn;
-                TokensOut += entry.TokensOut;
+                // Absence poisons the total rather than contributing zero: see TokensIn.
+                TokensIn = TokensIn is { } runningIn && entry.TokensIn is { } attemptIn
+                    ? runningIn + attemptIn
+                    : null;
+                TokensOut = TokensOut is { } runningOut && entry.TokensOut is { } attemptOut
+                    ? runningOut + attemptOut
+                    : null;
                 Cost = Cost.Add(entry);
             }
         }

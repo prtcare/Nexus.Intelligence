@@ -45,6 +45,15 @@ public static class IntelligenceServiceCollectionExtensions
         // implementations are AI-owned.
         services.AddSingleton<IModelCatalog, AggregatingModelCatalog>();
         services.AddSingleton<IModelGateway, RoutingModelGateway>();
+
+        // ONE instance, TWO ports, on purpose. The governed path needs to know whether the provider
+        // reported usage and the Platform port cannot carry that fact, so ModelStep depends on the
+        // richer port — see ModelGatewayOutcome. Two registrations would be two gateways, and the
+        // resolved instance would become a property of registration order, which is the defect the
+        // health source's comment above already records for a different pair.
+        services.AddSingleton<IUsageReportingModelGateway>(
+            provider => (IUsageReportingModelGateway)provider.GetRequiredService<IModelGateway>());
+
         services.AddSingleton<IUsageMeter, InMemoryUsageMeter>();
 
         services.AddSingleton<IContextRanker, KeywordContextRanker>();

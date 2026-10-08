@@ -60,13 +60,17 @@ public sealed class InMemoryAiOperationsLedger : IAiUsageLedger, IAiCostLedger
             {
                 Key = group.Key,
                 Executions = group.Count(),
-                TokensIn = group.Sum(entry => entry.TokensIn),
-                TokensOut = group.Sum(entry => entry.TokensOut),
+                // Summed over the entries that REPORTED, with the rest counted rather than zero-filled.
+                // The entry's null already means "no measurement", and adding 0m for it into the total
+                // would reconstruct the exact confusion the null exists to prevent.
+                TokensIn = group.Sum(entry => entry.TokensIn ?? 0),
+                TokensOut = group.Sum(entry => entry.TokensOut ?? 0),
                 Cost = group.Sum(entry => entry.AuthoritativeCost ?? 0m),
                 Currency = group
                     .Select(entry => entry.Currency)
                     .FirstOrDefault(currency => currency is not null),
                 UnpricedExecutions = group.Count(entry => entry.AuthoritativeCost is null),
+                UnreportedUsage = group.Count(entry => !entry.HasReportedUsage),
                 FallbackExecutions = group.Count(entry => entry.IsFallback),
             })
             .OrderBy(bucket => bucket.Key, StringComparer.Ordinal)

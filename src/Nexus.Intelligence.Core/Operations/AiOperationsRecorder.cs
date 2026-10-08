@@ -54,11 +54,24 @@ public sealed record AiInvocationFacts
     /// <summary>True when this invocation was a fallback attempt rather than the primary route.</summary>
     public bool IsFallback { get; init; }
 
-    /// <summary>Input tokens the provider reported.</summary>
-    public required int TokensIn { get; init; }
+    /// <summary>
+    /// Input tokens the provider reported, or <c>null</c> when it reported no usage at all.
+    /// </summary>
+    /// <remarks>
+    /// <b>Null means "we were told nothing", and it must survive to here.</b> The provider adapter is
+    /// the only place that can observe the difference between a usage block that said zero and no usage
+    /// block at all, and Platform's <c>ModelUsage</c> — which is non-nullable and defaults to zero —
+    /// cannot carry it. So the adapter reports it out of band and it arrives here as null. Coercing it
+    /// to zero at any point on the way makes an unmeasured execution indistinguishable from a measured
+    /// one, and the cost basis below is derived from this value.
+    /// </remarks>
+    public required int? TokensIn { get; init; }
 
-    /// <summary>Output tokens the provider reported.</summary>
-    public required int TokensOut { get; init; }
+    /// <summary>
+    /// Output tokens the provider reported, or <c>null</c> when it reported no usage at all.
+    /// </summary>
+    /// <remarks>Null together with <see cref="TokensIn"/> or not at all.</remarks>
+    public required int? TokensOut { get; init; }
 
     /// <summary>What the route was predicted to cost before the call, where pricing metadata allowed it.</summary>
     public decimal? PreInvocationEstimate { get; init; }
@@ -133,11 +146,16 @@ public sealed record AiExecutionFacts
     /// <summary>The tools the execution invoked, by identifier.</summary>
     public IReadOnlyList<string> ToolsInvoked { get; init; } = [];
 
-    /// <summary>Total input tokens across every invocation of this execution.</summary>
-    public int TokensIn { get; init; }
+    /// <summary>
+    /// Total input tokens across every invocation of this execution, or <c>null</c> when any invocation
+    /// reported no usage.
+    /// </summary>
+    /// <remarks>A sum with an unknown part is unknown — see the token members on the usage entry.</remarks>
+    public int? TokensIn { get; init; }
 
-    /// <summary>Total output tokens across every invocation of this execution.</summary>
-    public int TokensOut { get; init; }
+    /// <summary>Total output tokens across every invocation of this execution, or <c>null</c> when any did not report.</summary>
+    /// <remarks>See <see cref="TokensIn"/>.</remarks>
+    public int? TokensOut { get; init; }
 
     /// <summary>The execution's authoritative cost, where a price was available.</summary>
     public decimal? Cost { get; init; }
@@ -253,7 +271,15 @@ public sealed class AiOperationsRecorder
         // The measurement, not the prediction. Computed from the tokens the provider reported against
         // the configured rate, so it can disagree with the pre-invocation estimate and the disagreement
         // is the point.
-        var actual = lookup.Quote?.CostOf(facts.TokensIn, facts.TokensOut);
+        //
+        // A measurement requires a MEASUREMENT. When the provider reported no usage there is nothing to
+        // price, and the cost is unknown — not zero. Falling through with a fabricated zero here would
+        // produce a real decimal from `CostOf(0, 0)`, and `BasisFor` would label it ActualRecorded:
+        // a "measured" cost of nothing, which every budget ceiling passes. The null is deliberate and
+        // is what keeps the unpriced and the unpaid-apart.
+        var actual = facts.TokensIn is { } tokensIn && facts.TokensOut is { } tokensOut
+            ? lookup.Quote?.CostOf(tokensIn, tokensOut)
+            : null;
         var currency = lookup.Quote?.Currency ?? facts.Currency;
         var basis = AiCostReconciler.BasisFor(facts.PreInvocationEstimate, actual);
 

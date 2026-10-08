@@ -49,7 +49,7 @@ public sealed class OpenAIModelGateway : INamedModelGateway
     private async Task<string> ResolveApiKeyAsync(CancellationToken ct)
         => await _secrets.ResolveAsync(_options.ApiKeyRef, ct) ?? string.Empty;
 
-    public async Task<ModelInvocationResult> InvokeAsync(ModelInvocation invocation, CancellationToken ct = default)
+    public async Task<ModelGatewayOutcome> InvokeReportingUsageAsync(ModelInvocation invocation, CancellationToken ct = default)
     {
         var verdict = await _quotaPolicy.CheckAsync(invocation.Identity, invocation.ModelId, ct);
         if (!verdict.Allowed)
@@ -65,12 +65,14 @@ public sealed class OpenAIModelGateway : INamedModelGateway
             // it would change behaviour above the seam - the AI Head would stop treating it as a
             // retryable unavailability, and a denial the estate issued itself would stop being eligible
             // for failover. The layer that made this decision is the layer that owns its category.
-            return new ModelInvocationResult
+            //
+            // Unmeasured, and correctly so: no vendor was contacted, so no usage exists to report.
+            return ModelGatewayOutcome.Unmeasured(new ModelInvocationResult
             {
                 Success = false,
                 Error = verdict.Reason ?? "Quota exceeded",
                 ModelUsed = invocation.ModelId
-            };
+            });
         }
 
         try
@@ -81,24 +83,46 @@ public sealed class OpenAIModelGateway : INamedModelGateway
 
             var completion = await chatClient.CompleteChatAsync(messages, cancellationToken: ct);
 
+            // THE PROVIDER'S OWN USAGE BLOCK, OR NOTHING. `Usage` is nullable in the SDK, and this is the
+            // only layer in the estate that can observe whether it was there.
+            //
+            // This used to read `Usage?.InputTokenCount ?? 0`, which turned "the vendor told us nothing"
+            // into "the vendor told us zero" — and because the cost basis is derived from these counts,
+            // that fabricated zero became a real decimal from CostOf(0, 0) and was then labelled
+            // ActualRecorded: a MEASURED cost of nothing, which every budget ceiling passes. Absence is
+            // now carried as absence, out of band, because Platform's ModelUsage is non-nullable and
+            // cannot express it (see ModelGatewayOutcome).
+            var reportedUsage = completion.Value.Usage;
+
             var usage = new ModelUsage(
-                completion.Value.Usage?.InputTokenCount ?? 0,
-                completion.Value.Usage?.OutputTokenCount ?? 0,
+                reportedUsage?.InputTokenCount ?? 0,
+                reportedUsage?.OutputTokenCount ?? 0,
                 0m);
 
             await _usageMeter.RecordAsync(UsageRecordFor(invocation, usage), ct);
             await _auditLog.AppendAsync(AuditEntryFor(invocation, success: true, "Invoked"), ct);
 
-            return new ModelInvocationResult
+            return new ModelGatewayOutcome
             {
-                Success = true,
-                Message = new ModelMessage
+                // The Platform shape still carries the zero-filled counts, because the type has no other
+                // value to carry. It is not the authority for the cost basis — TokensIn/TokensOut below
+                // are, and they are null when the provider said nothing.
+                Result = new ModelInvocationResult
                 {
-                    Role = ModelRole.Assistant,
-                    Content = completion.Value.Content.Count > 0 ? completion.Value.Content[0].Text : string.Empty
+                    Success = true,
+                    Message = new ModelMessage
+                    {
+                        Role = ModelRole.Assistant,
+                        Content = completion.Value.Content.Count > 0 ? completion.Value.Content[0].Text : string.Empty
+                    },
+                    Usage = usage,
+                    ModelUsed = invocation.ModelId
                 },
-                Usage = usage,
-                ModelUsed = invocation.ModelId
+
+                // Null together or not at all: a half-reported block would make a total that looks
+                // measured and is not.
+                TokensIn = reportedUsage?.InputTokenCount,
+                TokensOut = reportedUsage?.OutputTokenCount,
             };
         }
         catch (Exception ex)
@@ -117,15 +141,29 @@ public sealed class OpenAIModelGateway : INamedModelGateway
             // Before this member existed there was only Error, so the layer above had nothing to branch
             // on and every provider-reported failure - a timeout, a rejected key, a retired model -
             // arrived downstream as one undifferentiated category.
-            return new ModelInvocationResult
+            // Unmeasured: the call did not complete, so no usage exists to report. That is not a zero —
+            // it is the absence of a measurement, and it must not be priced as one.
+            return ModelGatewayOutcome.Unmeasured(new ModelInvocationResult
             {
                 Success = false,
                 Error = ex.Message,
                 Failure = OpenAIFailureClassifier.Classify(ex, ct),
                 ModelUsed = invocation.ModelId
-            };
+            });
         }
     }
+
+    /// <summary>
+    /// The Platform-shaped entry point, for consumers that only need the result.
+    /// </summary>
+    /// <remarks>
+    /// <b>A caller using this method cannot tell an unreported usage from a reported zero</b> — Platform's
+    /// <see cref="ModelUsage"/> has no way to say so. The governed path uses
+    /// <see cref="InvokeReportingUsageAsync"/>; this exists because <see cref="IModelGateway"/> requires
+    /// it, and it discards the distinction on purpose rather than inventing one.
+    /// </remarks>
+    public async Task<ModelInvocationResult> InvokeAsync(ModelInvocation invocation, CancellationToken ct = default)
+        => (await InvokeReportingUsageAsync(invocation, ct).ConfigureAwait(false)).Result;
 
     public async IAsyncEnumerable<ModelStreamChunk> StreamAsync(
         ModelInvocation invocation,

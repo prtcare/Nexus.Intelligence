@@ -92,11 +92,20 @@ public enum AiEvaluationVerdict
 /// <summary>Token and unit consumption for one execution.</summary>
 public sealed record AiTokenUsage
 {
-    /// <summary>Input tokens consumed.</summary>
-    public int InputTokens { get; init; }
+    /// <summary>
+    /// Input tokens consumed, or <c>null</c> when the provider reported no usage.
+    /// </summary>
+    /// <remarks>
+    /// <b>Null is not zero.</b> A caller reading <c>null</c> is being told the estate has no measurement;
+    /// a caller reading <c>0</c> is being told the execution consumed no tokens. Serving the first as
+    /// the second would state a measurement nobody made. This is the caller-facing end of the same
+    /// distinction <c>AiUsageEntry.TokensIn</c> carries.
+    /// </remarks>
+    public int? InputTokens { get; init; }
 
-    /// <summary>Output tokens produced.</summary>
-    public int OutputTokens { get; init; }
+    /// <summary>Output tokens produced, or <c>null</c> when the provider reported no usage.</summary>
+    /// <remarks>See <see cref="InputTokens"/>.</remarks>
+    public int? OutputTokens { get; init; }
 
     /// <summary>Input tokens served from a provider-side cache, where the provider reports them.</summary>
     public int? CachedInputTokens { get; init; }
@@ -107,7 +116,11 @@ public sealed record AiTokenUsage
     /// <summary>What <see cref="OtherUnits"/> counts, e.g. <c>image</c>. Absent when no other units were used.</summary>
     public string? UnitName { get; init; }
 
-    /// <summary>Nothing consumed.</summary>
+    /// <summary>No usage was recorded for this execution.</summary>
+    /// <remarks>
+    /// Both counts are null rather than zero: "nothing was recorded" and "nothing was consumed" are
+    /// different facts, and only the second is a measurement.
+    /// </remarks>
     public static AiTokenUsage None { get; } = new();
 }
 
