@@ -444,17 +444,26 @@ public sealed class AiOperationsPublicationProjection
                 continue;
             }
 
+            var isProbe = kind is "BackgroundService";
+
             units.Add(new AiRuntimeUnit
             {
-                UnitId = ShortName(registration.ServiceType),
+                // An opaque hosted registration is named by WHERE IT CAME FROM, because the container
+                // knows nothing else about it. Two rows both called "IHostedService" would be
+                // indistinguishable, and one of them is the sweep an operator is looking for.
+                UnitId = kind is "HostedService"
+                    ? $"IHostedService (from {registration.SourceAssembly})"
+                    : ShortName(registration.ServiceType),
                 Kind = kind,
                 Implemented = true,
                 RegisteredInContainer = true,
-                ConfiguredEnabled = kind is "BackgroundService"
-                    ? _operations.ProbeInterval is not null
-                    : null,
-                Hosted = kind is "BackgroundService" && _runtime.HealthProbeServiceHosted,
-                Scheduled = kind is "BackgroundService",
+
+                // The probe's switch is the configuration member the composition root reads. A hosted
+                // registration the AI Head does not own has no switch here, and null says so rather
+                // than implying one that is off.
+                ConfiguredEnabled = isProbe ? _operations.ProbeInterval is not null : null,
+                Hosted = isProbe ? _runtime.HealthProbeServiceHosted : true,
+                Scheduled = true,
             });
         }
 
@@ -493,9 +502,17 @@ public sealed class AiOperationsPublicationProjection
     {
         var service = ShortName(registration.ServiceType);
 
-        if (registration.Lifetime is "HostedService")
+        // The AI Head's own sweep, by its concrete type. Registered under that type precisely so that
+        // this question has an answer from the container rather than from a re-reading of the
+        // composition root's guard.
+        if (service is "AiHealthProbeService")
         {
             return "BackgroundService";
+        }
+
+        if (registration.Lifetime is "HostedService")
+        {
+            return "HostedService";
         }
 
         if (service.StartsWith("IAi", StringComparison.Ordinal) || service.StartsWith("Ai", StringComparison.Ordinal))

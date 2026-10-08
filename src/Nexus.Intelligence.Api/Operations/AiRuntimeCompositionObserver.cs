@@ -34,6 +34,19 @@ public static class AiRuntimeCompositionObserver
     /// <summary>The configuration path a provider's own section lives under.</summary>
     private const string ProviderConfigurationRoot = "Platform:Providers";
 
+    /// <summary>
+    /// The composition root's own registration of the probe sweep, by service type name.
+    /// </summary>
+    /// <remarks>
+    /// The probe is registered under its concrete type as well as under
+    /// <see cref="IHostedService"/>, so that "the estate runs this sweep" is answerable by asking the
+    /// container rather than by re-deriving the guard the composition root applied. A registration
+    /// under <see cref="IHostedService"/> alone would be indistinguishable from the other hosted
+    /// service this estate composes.
+    /// </remarks>
+    private static readonly string HealthProbeServiceTypeName =
+        typeof(AiHealthProbeService).FullName!;
+
     /// <summary>Observes the composition.</summary>
     /// <param name="services">The service collection, after every Add call has run.</param>
     /// <param name="configuration">The bound configuration.</param>
@@ -57,8 +70,13 @@ public static class AiRuntimeCompositionObserver
             MappedApiPrefixes = ObserveApiSurfaces(endpoints),
             Registrations = registrations,
             ProviderAdapters = ObserveProviderAdapters(providerIds, deployed, registrations, configuration),
+
+            // The health probe service BY NAME, and not "a hosted service exists". The estate does
+            // register another hosted service through a dependency the AI Head does not own, so the
+            // weaker test answered true on an estate whose probe sweep is not composed at all — which
+            // is precisely the "implemented is not running" collapse this member exists to prevent.
             HealthProbeServiceHosted = registrations.Any(
-                r => r.Lifetime is "HostedService"),
+                r => string.Equals(r.ServiceType, HealthProbeServiceTypeName, StringComparison.Ordinal)),
         };
     }
 
@@ -86,10 +104,34 @@ public static class AiRuntimeCompositionObserver
                 serviceType.FullName ?? serviceType.Name,
                 implementationType?.FullName,
                 lifetime,
-                implementationType?.Assembly.GetName().Name ?? "(factory or instance)"));
+                implementationType?.Assembly.GetName().Name ?? FactorySourceAssembly(descriptor)));
         }
 
         return observed;
+    }
+
+    /// <summary>
+    /// The assembly a factory registration was declared in, recovered from the delegate's own type.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>A factory is not anonymous.</b> A lambda written in a composition root compiles to a closure
+    /// class declared inside that root's own class, so the delegate's runtime type names the assembly
+    /// that registered it. Reporting <c>(factory)</c> for every one of them — which an earlier form of
+    /// this method did — makes most of a container unattributable, and the first question anyone asks
+    /// about an unexpected registration is where it came from.
+    /// </para>
+    /// <para>
+    /// The type is nullable because an instance registration genuinely has neither a factory nor a
+    /// declaring assembly inside this process.
+    /// </para>
+    /// </remarks>
+    private static string FactorySourceAssembly(ServiceDescriptor descriptor)
+    {
+        var assembly = descriptor.ImplementationFactory?.GetType().DeclaringType?.Assembly
+            ?? descriptor.ImplementationFactory?.Method.DeclaringType?.Assembly;
+
+        return assembly?.GetName().Name ?? "(instance)";
     }
 
     /// <summary>
